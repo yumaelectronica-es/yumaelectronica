@@ -33,8 +33,10 @@
                         </div>
                     </div>
                     <form @submit.prevent="login()" class="mt-5">
-                        <label for="admin-pass" class="mb-1.5 block text-caption font-medium text-ink-600">Contraseña de administrador</label>
-                        <input id="admin-pass" type="password" x-model="password" autofocus class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                        <label for="admin-user" class="mb-1.5 block text-caption font-medium text-ink-600">Usuario</label>
+                        <input id="admin-user" type="text" x-model="username" autofocus autocomplete="username" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                        <label for="admin-pass" class="mb-1.5 mt-3 block text-caption font-medium text-ink-600">Contraseña</label>
+                        <input id="admin-pass" type="password" x-model="password" autocomplete="current-password" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
                         <p class="mt-2 text-[11px] text-danger-600" x-show="loginError" x-cloak x-text="loginError"></p>
                         <button type="submit" class="mt-4 inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand-500 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600">Entrar</button>
                     </form>
@@ -569,12 +571,14 @@
         </template>
 
         <script>
+            var ADMIN_USERNAME = 'yuma_admin';
             var ADMIN_PASSWORD = 'e7Li6M02IoyUUSCB';
             var ADMIN_SESSION_KEY = 'yuma_admin_session_v1';
 
             function adminApp() {
                 return {
                     authed: false,
+                    username: '',
                     password: '',
                     loginError: '',
                     tab: 'dashboard',
@@ -610,18 +614,19 @@
                         if (this.authed) this.loadData();
                     },
                     login() {
-                        if (this.password === ADMIN_PASSWORD) {
+                        if (this.username === ADMIN_USERNAME && this.password === ADMIN_PASSWORD) {
                             sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
                             this.authed = true;
                             this.loginError = '';
                             this.loadData();
                         } else {
-                            this.loginError = 'Contraseña incorrecta.';
+                            this.loginError = 'Usuario o contraseña incorrectos.';
                         }
                     },
                     logout() {
                         sessionStorage.removeItem(ADMIN_SESSION_KEY);
                         this.authed = false;
+                        this.username = '';
                         this.password = '';
                     },
                     loadData() {

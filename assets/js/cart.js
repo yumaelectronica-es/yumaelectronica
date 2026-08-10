@@ -387,7 +387,7 @@
     var VISITS_KEY = 'yuma_visits_v1';
     var VISITS_MAX = 150;
     function logVisit() {
-        if (location.pathname.indexOf('/admin.html') > -1) return;
+        if (location.pathname.indexOf('/gestion-b3699102c9da.html') > -1) return;
         try {
             var list = JSON.parse(localStorage.getItem(VISITS_KEY)) || [];
             if (!Array.isArray(list)) list = [];

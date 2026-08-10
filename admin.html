@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noindex, nofollow">
+
+        <title>Panel de administración — Yuma Electrónica</title>
+
+        <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap">
+
+        <link rel="stylesheet" href="/assets/css/app.css">
+        <script defer src="/assets/js/cart.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        <style>[x-cloak]{display:none!important}</style>
+    </head>
+    <body class="bg-ink-50 text-ink-900" x-data="adminApp()" x-init="init()">
+
+        <template x-if="!authed">
+            <div class="flex min-h-screen items-center justify-center px-6">
+                <div class="w-full max-w-sm rounded-2xl border border-ink-100 bg-white p-6 shadow-card">
+                    <div class="flex items-center gap-2.5">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0"><path d="M12 2 3 7v6c0 5 4 8.5 9 9 5-.5 9-4 9-9V7l-9-5Z"/></svg>
+                        </span>
+                        <div>
+                            <p class="text-body-sm font-bold text-ink-900">Yuma Electrónica</p>
+                            <p class="text-caption text-ink-500">Panel de administración</p>
+                        </div>
+                    </div>
+                    <form @submit.prevent="login()" class="mt-5">
+                        <label for="admin-pass" class="mb-1.5 block text-caption font-medium text-ink-600">Contraseña de administrador</label>
+                        <input id="admin-pass" type="password" x-model="password" autofocus class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                        <p class="mt-2 text-[11px] text-danger-600" x-show="loginError" x-cloak x-text="loginError"></p>
+                        <button type="submit" class="mt-4 inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand-500 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600">Entrar</button>
+                    </form>
+                    <p class="mt-4 text-[11px] leading-relaxed text-ink-400">Sitio de demostración: esta pantalla es un control de acceso simulado en el navegador, no una autenticación real. Contraseña de demo: <span class="font-mono font-semibold text-ink-600">yuma-admin-2026</span></p>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="authed">
+            <div class="min-h-screen">
+                <header class="border-b border-ink-100 bg-white">
+                    <div class="mx-auto hidden max-w-container items-center justify-between gap-4 px-6 py-4 lg:flex">
+                        <div class="flex items-center gap-2.5">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0"><path d="M12 2 3 7v6c0 5 4 8.5 9 9 5-.5 9-4 9-9V7l-9-5Z"/></svg>
+                            </span>
+                            <div>
+                                <p class="text-body-sm font-bold text-ink-900">Yuma Electrónica</p>
+                                <p class="text-caption text-ink-500">Panel de administración</p>
+                            </div>
+                        </div>
+                        <a href="/index.html" class="text-caption font-medium text-ink-500 hover:text-ink-800">Ver tienda</a>
+                        <button type="button" @click="logout()" class="shrink-0 rounded-lg border border-ink-200 px-4 py-2 text-caption font-semibold text-ink-600 transition hover:text-danger-600">Cerrar sesión</button>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2 px-3 py-3 lg:hidden">
+                        <button type="button" @click="mobileNavOpen = true" aria-label="Abrir menú" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-600 transition hover:bg-ink-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                        </button>
+                        <div class="flex min-w-0 flex-1 items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0 text-brand-600" x-html="currentTab().icon"></svg>
+                            <span class="truncate text-body-sm font-semibold text-ink-900" x-text="currentTab().label"></span>
+                        </div>
+                        <button type="button" @click="tab = 'notifications'" aria-label="Notificaciones" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-600 transition hover:bg-ink-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                            <span class="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger-500 px-1 text-[10px] font-bold text-white" x-show="notifications.length > 0" x-cloak x-text="notifications.length"></span>
+                        </button>
+                    </div>
+                </header>
+
+                <template x-if="mobileNavOpen">
+                    <div class="fixed inset-0 z-50 lg:hidden">
+                        <div class="absolute inset-0 bg-ink-900/55" x-transition:enter="transition duration-2 ease-out" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition duration-2 ease-in" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="mobileNavOpen = false"></div>
+                        <div class="absolute inset-y-0 left-0 flex w-72 max-w-[80%] flex-col overflow-y-auto bg-white p-4 shadow-modal" x-transition:enter="transition duration-3 ease-out" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition duration-2 ease-in" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0"><path d="M12 2 3 7v6c0 5 4 8.5 9 9 5-.5 9-4 9-9V7l-9-5Z"/></svg>
+                                    </span>
+                                    <p class="text-body-sm font-bold text-ink-900">Yuma Electrónica</p>
+                                </div>
+                                <button type="button" @click="mobileNavOpen = false" aria-label="Cerrar menú" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-400 hover:bg-ink-50 hover:text-ink-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            <nav class="mt-5 flex-1 space-y-1">
+                                <template x-for="t in tabs" :key="t.id">
+                                    <button type="button" @click="tab = t.id; mobileNavOpen = false" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === t.id ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0" x-html="t.icon"></svg>
+                                        <span class="flex-1" x-text="t.label"></span>
+                                        <span class="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-danger-500 px-1 text-[10px] font-bold text-white" x-show="t.id === 'notifications' && notifications.length > 0" x-cloak x-text="notifications.length"></span>
+                                    </button>
+                                </template>
+                            </nav>
+
+                            <div class="space-y-1 border-t border-ink-100 pt-3">
+                                <a href="/index.html" class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-body-sm font-semibold text-ink-600 transition duration-2 hover:bg-ink-50">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>
+                                    <span class="flex-1">Ver tienda</span>
+                                </a>
+                                <button type="button" @click="logout()" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold text-danger-600 transition duration-2 hover:bg-danger-50">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+                                    <span class="flex-1">Cerrar sesión</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <div class="mx-auto flex max-w-container items-start gap-6 px-4 py-6 sm:px-6 sm:py-8">
+                    <aside class="hidden shrink-0 lg:block lg:w-64">
+                        <nav class="sticky top-6 space-y-1 rounded-2xl border border-ink-100 bg-white p-3 shadow-card">
+                            <button type="button" @click="tab = 'dashboard'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'dashboard' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                                <span class="flex-1">Panel de control</span>
+                            </button>
+                            <button type="button" @click="tab = 'products'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'products' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M21 7.5a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 7.5v9a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/><path d="M3.3 6.5 12 11.5l8.7-5M12 21.5v-10"/></svg>
+                                <span class="flex-1">Productos</span>
+                            </button>
+                            <button type="button" @click="tab = 'orders'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'orders' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><rect x="1" y="6" width="15" height="12" rx="1"/><path d="M16 10h3l3 3v5h-6z"/><circle cx="6" cy="19" r="1.5"/><circle cx="17.5" cy="19" r="1.5"/></svg>
+                                <span class="flex-1">Pedidos</span>
+                            </button>
+                            <button type="button" @click="tab = 'notifications'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'notifications' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                                <span class="flex-1">Notificaciones</span>
+                                <span class="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-danger-500 px-1 text-[10px] font-bold text-white" x-show="notifications.length > 0" x-cloak x-text="notifications.length"></span>
+                            </button>
+                            <button type="button" @click="tab = 'payments'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'payments' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                                <span class="flex-1">Datos de pago</span>
+                            </button>
+                            <button type="button" @click="tab = 'customers'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'customers' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                <span class="flex-1">Clientes</span>
+                            </button>
+                            <button type="button" @click="tab = 'visitors'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'visitors' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <span class="flex-1">Visitantes</span>
+                            </button>
+                            <button type="button" @click="tab = 'carts'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'carts' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.5 3h2l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 7.5H6"/></svg>
+                                <span class="flex-1">Carritos abandonados</span>
+                            </button>
+                        </nav>
+                    </aside>
+
+                    <main class="min-w-0 flex-1">
+
+                    <template x-if="tab === 'dashboard'">
+                        <div>
+                            <h1 class="text-h3 text-ink-900">Panel de control</h1>
+                            <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                                <div class="rounded-2xl border border-ink-100 bg-white p-4 shadow-card">
+                                    <p class="text-caption text-ink-500">Pedidos totales</p>
+                                    <p class="mt-1 font-display text-h3 font-bold text-ink-900" x-text="orders.length"></p>
+                                </div>
+                                <div class="rounded-2xl border border-ink-100 bg-white p-4 shadow-card">
+                                    <p class="text-caption text-ink-500">Facturado</p>
+                                    <p class="mt-1 font-display text-h3 font-bold text-ink-900" x-text="fmt(orders.reduce((s,o) => s + (o.total||0), 0))"></p>
+                                </div>
+                                <div class="rounded-2xl border border-ink-100 bg-white p-4 shadow-card">
+                                    <p class="text-caption text-ink-500">Clientes</p>
+                                    <p class="mt-1 font-display text-h3 font-bold text-ink-900" x-text="accounts.length"></p>
+                                </div>
+                                <div class="rounded-2xl border border-ink-100 bg-white p-4 shadow-card">
+                                    <p class="text-caption text-ink-500">Productos desactivados</p>
+                                    <p class="mt-1 font-display text-h3 font-bold text-ink-900" x-text="disabledProducts.length"></p>
+                                </div>
+                                <div class="rounded-2xl border border-ink-100 bg-white p-4 shadow-card">
+                                    <p class="text-caption text-ink-500">Notificaciones</p>
+                                    <p class="mt-1 font-display text-h3 font-bold" :class="notifications.length ? 'text-danger-600' : 'text-ink-900'" x-text="notifications.length"></p>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                                <div class="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
+                                    <div class="flex items-center justify-between">
+                                        <h2 class="text-h4 text-ink-900">Últimos pedidos</h2>
+                                        <button type="button" @click="tab = 'orders'" class="text-caption font-semibold text-brand-600 hover:text-brand-700">Ver todos</button>
+                                    </div>
+                                    <div class="mt-3 space-y-2">
+                                        <template x-for="order in orders.slice(0, 5)" :key="order.orderNumber">
+                                            <div class="flex items-center justify-between gap-3 border-t border-ink-100 pt-2 text-body-sm first:border-0 first:pt-0">
+                                                <span class="min-w-0 truncate text-ink-700"><span class="font-semibold text-ink-900" x-text="order.orderNumber"></span> · <span x-text="order.email"></span></span>
+                                                <span class="shrink-0 tabular-nums font-semibold text-ink-900" x-text="fmt(order.total)"></span>
+                                            </div>
+                                        </template>
+                                        <p class="text-body-sm text-ink-400" x-show="orders.length === 0" x-cloak>Todavía no hay pedidos.</p>
+                                    </div>
+                                </div>
+                                <div class="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
+                                    <div class="flex items-center justify-between">
+                                        <h2 class="text-h4 text-ink-900">Notificaciones recientes</h2>
+                                        <button type="button" @click="tab = 'notifications'" class="text-caption font-semibold text-brand-600 hover:text-brand-700">Ver todas</button>
+                                    </div>
+                                    <div class="mt-3 space-y-2">
+                                        <template x-for="n in notifications.slice(0, 5)" :key="n.id">
+                                            <div class="border-t border-ink-100 pt-2 text-body-sm text-ink-700 first:border-0 first:pt-0" x-text="n.text"></div>
+                                        </template>
+                                        <p class="text-body-sm text-ink-400" x-show="notifications.length === 0" x-cloak>Sin notificaciones pendientes.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="tab === 'products'">
+                        <div>
+                            <h1 class="text-h3 text-ink-900">Productos</h1>
+                            <p class="mt-1 text-body-sm text-ink-500">El catálogo son fichas HTML estáticas: aquí no se edita su contenido, solo se activa o desactiva la venta. Un producto desactivado muestra "No disponible" en su ficha y en los listados.</p>
+
+                            <input type="search" x-model="productSearch" placeholder="Buscar por nombre o marca…" class="mt-4 h-11 w-full max-w-sm rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                            <p class="mt-2 text-[11px] text-ink-400" x-show="!productsLoaded" x-cloak>Cargando catálogo…</p>
+
+                            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" x-show="productSearch.trim().length > 1">
+                                <template x-for="p in filteredProducts()" :key="p.id">
+                                    <div class="flex items-center gap-3 rounded-xl border border-ink-100 bg-white p-3 shadow-card">
+                                        <img :src="p.image" :alt="p.name" class="h-14 w-14 shrink-0 rounded-lg border border-ink-100 object-contain p-1">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-body-sm font-semibold text-ink-900" x-text="p.name"></p>
+                                            <p class="text-caption text-ink-500"><span x-text="p.brand"></span> · <span x-text="fmt(p.price)"></span></p>
+                                        </div>
+                                        <button type="button" @click="toggleProduct(p.id)" class="shrink-0 rounded-lg border px-3 py-1.5 text-caption font-semibold transition" :class="isDisabled(p.id) ? 'border-savings-500 text-savings-700 hover:bg-savings-50' : 'border-danger-200 text-danger-600 hover:bg-danger-50'" x-text="isDisabled(p.id) ? 'Reactivar' : 'Desactivar'"></button>
+                                    </div>
+                                </template>
+                                <p class="text-body-sm text-ink-400" x-show="productsLoaded && filteredProducts().length === 0" x-cloak>Sin resultados.</p>
+                            </div>
+
+                            <div class="mt-8" x-show="disabledProductDetails().length > 0" x-cloak>
+                                <h2 class="text-h4 text-ink-900">Productos desactivados (<span x-text="disabledProductDetails().length"></span>)</h2>
+                                <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    <template x-for="p in disabledProductDetails()" :key="p.id">
+                                        <div class="flex items-center gap-3 rounded-xl border border-danger-200 bg-danger-50/40 p-3">
+                                            <img :src="p.image" :alt="p.name" class="h-14 w-14 shrink-0 rounded-lg border border-ink-100 bg-white object-contain p-1">
+                                            <div class="min-w-0 flex-1">
+                                                <p class="truncate text-body-sm font-semibold text-ink-900" x-text="p.name"></p>
+                                                <p class="text-caption text-ink-500" x-text="p.brand"></p>
+                                            </div>
+                                            <button type="button" @click="toggleProduct(p.id)" class="shrink-0 rounded-lg border border-savings-500 px-3 py-1.5 text-caption font-semibold text-savings-700 transition hover:bg-savings-50">Reactivar</button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="tab === 'orders'">
+                        <div>
+                            <h1 class="text-h3 text-ink-900">Pedidos</h1>
+                            <div class="mt-4 flex items-center justify-between gap-3">
+                                <input type="search" x-model="search" placeholder="Buscar por número de pedido o email…" class="h-11 w-full max-w-sm rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                            </div>
+
+                            <div class="mt-4 overflow-hidden overflow-x-auto rounded-2xl border border-ink-100 bg-white shadow-card">
+                                <table class="w-full text-left text-body-sm">
+                                    <thead class="border-b border-ink-100 bg-ink-50/60 text-caption text-ink-500">
+                                        <tr>
+                                            <th class="px-4 py-3 font-semibold">Pedido</th>
+                                            <th class="px-4 py-3 font-semibold">Fecha</th>
+                                            <th class="px-4 py-3 font-semibold">Cliente</th>
+                                            <th class="px-4 py-3 font-semibold">Total</th>
+                                            <th class="px-4 py-3 font-semibold">Pago</th>
+                                            <th class="px-4 py-3 font-semibold">Estado</th>
+                                            <th class="px-4 py-3"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="order in filteredOrders()" :key="order.orderNumber">
+                                            <tr class="border-b border-ink-100 last:border-0 hover:bg-ink-50/50">
+                                                <td class="px-4 py-3 font-semibold text-ink-900" x-text="order.orderNumber"></td>
+                                                <td class="px-4 py-3 text-ink-500" x-text="formatDate(order.date)"></td>
+                                                <td class="px-4 py-3 text-ink-700" x-text="order.email"></td>
+                                                <td class="px-4 py-3 tabular-nums text-ink-900" x-text="fmt(order.total)"></td>
+                                                <td class="px-4 py-3">
+                                                    <span class="inline-flex items-center gap-1 text-caption" :class="order.paymentProofName ? 'text-savings-700' : 'text-ink-400'">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
+                                                        <span x-text="order.paymentProofName ? 'Justificante' : 'Sin justificante'"></span>
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold" :class="status(order).isDelivered ? 'bg-savings-50 text-savings-700' : 'bg-amber-200 text-amber-900'" x-text="status(order).steps[status(order).stepIndex].label"></span>
+                                                </td>
+                                                <td class="px-4 py-3 text-right">
+                                                    <button type="button" @click="select(order)" class="text-caption font-semibold text-brand-600 hover:text-brand-700">Ver</button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <template x-if="filteredOrders().length === 0">
+                                            <tr><td colspan="7" class="px-4 py-10 text-center text-ink-400">No hay pedidos que coincidan con la búsqueda.</td></tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="tab === 'notifications'">
+                        <div>
+                            <h1 class="text-h3 text-ink-900">Notificaciones</h1>
+                            <p class="mt-1 text-body-sm text-ink-500">Se calculan a partir de los pedidos guardados (no hay servidor que las empuje en tiempo real): nuevos pedidos y justificantes pendientes de revisar.</p>
+                            <div class="mt-4 space-y-2">
+                                <template x-for="n in notifications" :key="n.id">
+                                    <div class="flex items-center justify-between gap-3 rounded-xl border border-ink-100 bg-white p-4 shadow-card">
+                                        <div class="flex min-w-0 items-center gap-3">
+                                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" :class="n.type === 'order' ? 'bg-brand-50 text-brand-600' : 'bg-amber-200 text-amber-900'">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8Z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                            </span>
+                                            <div class="min-w-0">
+                                                <p class="truncate text-body-sm font-medium text-ink-900" x-text="n.text"></p>
+                                                <p class="text-caption text-ink-500" x-text="formatDate(n.date)"></p>
+                                            </div>
+                                        </div>
+                                        <div class="flex shrink-0 items-center gap-2">
+                                            <button type="button" @click="openOrderFromNotification(n.orderNumber)" class="text-caption font-semibold text-brand-600 hover:text-brand-700">Ver pedido</button>
+                                            <button type="button" @click="dismissNotif(n.id)" class="flex h-7 w-7 items-center justify-center rounded-full text-ink-400 hover:bg-ink-50 hover:text-ink-700" aria-label="Descartar">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                                <p class="text-body-sm text-ink-400" x-show="notifications.length === 0" x-cloak>No hay notificaciones pendientes.</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="tab === 'payments'">
+                        <div class="max-w-2xl">
+                            <h1 class="text-h3 text-ink-900">Datos de pago</h1>
+                            <p class="mt-1 text-body-sm text-ink-500">Estos datos son los que ven los clientes en el checkout para pagar por transferencia o Bizum. Cada método se puede activar o desactivar por separado.</p>
+
+                            <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                                <div class="rounded-2xl border p-5 shadow-card transition" :class="paymentForm.transferEnabled ? 'border-brand-200 bg-white' : 'border-ink-100 bg-ink-50/60'">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0"><path d="M3 21h18M3 10h18M5 6l7-4 7 4M4 10v11m16-11v11M9 10v11m6-11v11"/></svg>
+                                            </span>
+                                            <p class="font-semibold text-ink-900">Transferencia bancaria</p>
+                                        </div>
+                                        <button type="button" role="switch" :aria-checked="paymentForm.transferEnabled ? 'true' : 'false'" @click="paymentForm.transferEnabled = !paymentForm.transferEnabled" class="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition duration-2" :class="paymentForm.transferEnabled ? 'bg-brand-500' : 'bg-ink-200'">
+                                            <span class="inline-block h-5 w-5 shrink-0 translate-x-1 rounded-full bg-white shadow-card transition duration-2" :class="paymentForm.transferEnabled ? 'translate-x-6' : 'translate-x-1'"></span>
+                                        </button>
+                                    </div>
+                                    <p class="mt-1 text-caption font-semibold" :class="paymentForm.transferEnabled ? 'text-savings-700' : 'text-ink-400'" x-text="paymentForm.transferEnabled ? 'Activado' : 'Desactivado'"></p>
+
+                                    <div class="mt-4 space-y-3" :class="!paymentForm.transferEnabled && 'opacity-50'">
+                                        <div>
+                                            <label class="mb-1.5 block text-caption font-medium text-ink-600">Beneficiario</label>
+                                            <input type="text" x-model="paymentForm.beneficiary" :disabled="!paymentForm.transferEnabled" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                        </div>
+                                        <div>
+                                            <label class="mb-1.5 block text-caption font-medium text-ink-600">IBAN</label>
+                                            <input type="text" x-model="paymentForm.iban" :disabled="!paymentForm.transferEnabled" class="h-11 w-full rounded-lg border-ink-200 font-mono text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                        </div>
+                                        <div>
+                                            <label class="mb-1.5 block text-caption font-medium text-ink-600">BIC / SWIFT</label>
+                                            <input type="text" x-model="paymentForm.bic" :disabled="!paymentForm.transferEnabled" class="h-11 w-full rounded-lg border-ink-200 font-mono text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                        </div>
+                                        <div>
+                                            <label class="mb-1.5 block text-caption font-medium text-ink-600">Banco</label>
+                                            <input type="text" x-model="paymentForm.bankName" :disabled="!paymentForm.transferEnabled" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl border p-5 shadow-card transition" :class="paymentForm.bizumEnabled ? 'border-indigo-400 bg-white' : 'border-ink-100 bg-ink-50/60'">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/></svg>
+                                            </span>
+                                            <p class="font-semibold text-ink-900">Bizum</p>
+                                        </div>
+                                        <button type="button" role="switch" :aria-checked="paymentForm.bizumEnabled ? 'true' : 'false'" @click="paymentForm.bizumEnabled = !paymentForm.bizumEnabled" class="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition duration-2" :class="paymentForm.bizumEnabled ? 'bg-brand-500' : 'bg-ink-200'">
+                                            <span class="inline-block h-5 w-5 shrink-0 translate-x-1 rounded-full bg-white shadow-card transition duration-2" :class="paymentForm.bizumEnabled ? 'translate-x-6' : 'translate-x-1'"></span>
+                                        </button>
+                                    </div>
+                                    <p class="mt-1 text-caption font-semibold" :class="paymentForm.bizumEnabled ? 'text-savings-700' : 'text-ink-400'" x-text="paymentForm.bizumEnabled ? 'Activado' : 'Desactivado'"></p>
+
+                                    <div class="mt-4 space-y-3" :class="!paymentForm.bizumEnabled && 'opacity-50'">
+                                        <div>
+                                            <label class="mb-1.5 block text-caption font-medium text-ink-600">Número Bizum</label>
+                                            <input type="text" x-model="paymentForm.bizumNumber" :disabled="!paymentForm.bizumEnabled" class="h-11 w-full rounded-lg border-ink-200 font-mono text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                        </div>
+                                        <div>
+                                            <label class="mb-1.5 block text-caption font-medium text-ink-600">Titular</label>
+                                            <input type="text" x-model="paymentForm.bizumBeneficiary" :disabled="!paymentForm.bizumEnabled" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="mt-4 text-[11px] text-danger-600" x-show="!paymentForm.transferEnabled && !paymentForm.bizumEnabled" x-cloak>Al menos un método de pago debe quedar activado.</p>
+
+                            <div class="mt-5 flex items-center gap-3">
+                                <button type="button" @click="savePayments()" :disabled="!paymentForm.transferEnabled && !paymentForm.bizumEnabled" class="inline-flex h-11 items-center justify-center rounded-lg bg-brand-500 px-6 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50">Guardar cambios</button>
+                                <span class="text-caption font-medium text-savings-700" x-show="paymentsSaved" x-cloak x-transition>Guardado</span>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="tab === 'customers'">
+                        <div>
+                            <h1 class="text-h3 text-ink-900">Clientes</h1>
+                            <div class="mt-4 overflow-hidden overflow-x-auto rounded-2xl border border-ink-100 bg-white shadow-card">
+                                <table class="w-full text-left text-body-sm">
+                                    <thead class="border-b border-ink-100 bg-ink-50/60 text-caption text-ink-500">
+                                        <tr>
+                                            <th class="px-4 py-3 font-semibold">Nombre</th>
+                                            <th class="px-4 py-3 font-semibold">Email</th>
+                                            <th class="px-4 py-3 font-semibold">Teléfono</th>
+                                            <th class="px-4 py-3 font-semibold">Pedidos</th>
+                                            <th class="px-4 py-3 font-semibold">Gastado</th>
+                                            <th class="px-4 py-3 font-semibold">Alta</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="acc in accounts" :key="acc.email">
+                                            <tr class="border-b border-ink-100 last:border-0 hover:bg-ink-50/50">
+                                                <td class="px-4 py-3 font-semibold text-ink-900" x-text="acc.fullName || '—'"></td>
+                                                <td class="px-4 py-3 text-ink-700" x-text="acc.email"></td>
+                                                <td class="px-4 py-3 text-ink-500" x-text="acc.phone || '—'"></td>
+                                                <td class="px-4 py-3 tabular-nums text-ink-700" x-text="ordersForAccount(acc.email).length"></td>
+                                                <td class="px-4 py-3 tabular-nums text-ink-900" x-text="fmt(totalSpent(acc.email))"></td>
+                                                <td class="px-4 py-3 text-ink-500" x-text="acc.createdAt ? formatDate(acc.createdAt) : '—'"></td>
+                                            </tr>
+                                        </template>
+                                        <template x-if="accounts.length === 0">
+                                            <tr><td colspan="6" class="px-4 py-10 text-center text-ink-400">Todavía no hay clientes registrados.</td></tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="tab === 'visitors'">
+                        <div>
+                            <h1 class="text-h3 text-ink-900">Visitantes</h1>
+                            <div class="mt-3 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-200/30 p-4 text-body-sm text-amber-900">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 h-4 w-4 shrink-0"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>
+                                <span>Sitio estático sin servidor: esto solo registra la navegación en <strong>este mismo navegador</strong> (útil para probar el sitio), no la de tus clientes reales. Ver visitantes reales requeriría un backend con analítica.</span>
+                            </div>
+                            <div class="mt-4 flex justify-end">
+                                <button type="button" @click="clearVisitLog()" class="text-caption font-semibold text-ink-500 hover:text-danger-600">Borrar historial</button>
+                            </div>
+                            <div class="mt-2 overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-card">
+                                <table class="w-full text-left text-body-sm">
+                                    <thead class="border-b border-ink-100 bg-ink-50/60 text-caption text-ink-500">
+                                        <tr>
+                                            <th class="px-4 py-3 font-semibold">Página</th>
+                                            <th class="px-4 py-3 font-semibold">Título</th>
+                                            <th class="px-4 py-3 font-semibold">Hora</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="(v, idx) in visits" :key="idx">
+                                            <tr class="border-b border-ink-100 last:border-0 hover:bg-ink-50/50">
+                                                <td class="px-4 py-3 font-mono text-[12px] text-ink-700" x-text="v.path"></td>
+                                                <td class="px-4 py-3 text-ink-700" x-text="v.title"></td>
+                                                <td class="px-4 py-3 text-ink-500" x-text="formatDateTime(v.at)"></td>
+                                            </tr>
+                                        </template>
+                                        <template x-if="visits.length === 0">
+                                            <tr><td colspan="3" class="px-4 py-10 text-center text-ink-400">Sin actividad registrada todavía. Navega por la tienda en este navegador para ver entradas aquí.</td></tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="tab === 'carts'">
+                        <div class="max-w-lg">
+                            <h1 class="text-h3 text-ink-900">Carritos abandonados</h1>
+                            <div class="mt-3 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-200/30 p-4 text-body-sm text-amber-900">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 h-4 w-4 shrink-0"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>
+                                <span>Mismo límite: sin servidor, solo se puede ver el carrito sin finalizar de <strong>este navegador</strong>, no el de otros clientes.</span>
+                            </div>
+                            <div class="mt-4 space-y-3">
+                                <template x-for="c in abandonedCarts" :key="c.updatedAt">
+                                    <div class="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-body-sm font-semibold text-ink-900">Carrito sin finalizar</p>
+                                            <p class="text-caption text-ink-500" x-text="'Actualizado ' + formatDateTime(c.updatedAt)"></p>
+                                        </div>
+                                        <div class="mt-3 space-y-1.5 border-t border-ink-100 pt-3">
+                                            <template x-for="item in c.items" :key="item.id">
+                                                <div class="flex items-center justify-between gap-3 text-body-sm text-ink-700">
+                                                    <span class="min-w-0 truncate"><span x-text="item.qty"></span>&times; <span x-text="item.name"></span></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <div class="mt-3 flex items-center justify-between border-t border-ink-100 pt-3 font-semibold text-ink-900">
+                                            <span>Total</span><span x-text="fmt(c.total)"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                                <p class="text-body-sm text-ink-400" x-show="abandonedCarts.length === 0" x-cloak>No hay ningún carrito sin finalizar en este navegador ahora mismo.</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    </main>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="selectedOrder">
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/55 p-4" @click.self="closeDetail()">
+                <div class="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-modal">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-caption text-ink-500">Pedido</p>
+                            <p class="text-h4 text-ink-900" x-text="selectedOrder.orderNumber"></p>
+                        </div>
+                        <button type="button" @click="closeDetail()" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-400 hover:bg-ink-50 hover:text-ink-700" aria-label="Cerrar">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-2 gap-3 text-body-sm">
+                        <div><p class="text-caption text-ink-500">Cliente</p><p class="text-ink-900" x-text="selectedOrder.email"></p></div>
+                        <div><p class="text-caption text-ink-500">Fecha</p><p class="text-ink-900" x-text="formatDate(selectedOrder.date)"></p></div>
+                        <div><p class="text-caption text-ink-500">Total</p><p class="font-semibold text-ink-900" x-text="fmt(selectedOrder.total)"></p></div>
+                        <div><p class="text-caption text-ink-500">Pago</p><p class="text-ink-900" x-text="selectedOrder.payment === 'bizum' ? 'Bizum' : 'Transferencia'"></p></div>
+                    </div>
+
+                    <div class="mt-4 rounded-xl border border-ink-100 p-3 text-body-sm">
+                        <p class="font-semibold text-ink-900" x-text="selectedOrder.shippingName"></p>
+                        <p class="text-ink-600" x-text="selectedOrder.shippingAddress"></p>
+                        <p class="text-ink-600"><span x-text="selectedOrder.postalCode"></span> <span x-text="selectedOrder.city"></span>, <span x-text="selectedOrder.province"></span></p>
+                    </div>
+
+                    <div class="mt-4 space-y-1.5">
+                        <template x-for="item in selectedOrder.items" :key="item.name + item.qty">
+                            <div class="flex items-center justify-between gap-3 text-body-sm text-ink-700">
+                                <span class="min-w-0 truncate"><span x-text="item.qty"></span>&times; <span x-text="item.name"></span></span>
+                                <span class="shrink-0 tabular-nums" x-text="fmt(item.unitPrice * item.qty)"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="mt-4 rounded-xl p-3 text-body-sm" :class="selectedOrder.paymentProofName ? 'bg-savings-50 text-savings-700' : 'bg-ink-50 text-ink-500'">
+                        <span x-text="selectedOrder.paymentProofName ? 'Justificante recibido: ' + selectedOrder.paymentProofName : 'Sin justificante de pago todavía.'"></span>
+                    </div>
+
+                    <div class="mt-5">
+                        <p class="text-caption font-semibold text-ink-600">Actualizar estado</p>
+                        <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            <template x-for="(step, idx) in ORDER_STEPS" :key="step.key">
+                                <button type="button" @click="setStatus(selectedOrder, idx)" class="rounded-lg border px-3 py-2 text-caption font-semibold transition" :class="status(selectedOrder).stepIndex === idx ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-ink-200 text-ink-600 hover:border-brand-300'" x-text="step.label"></button>
+                            </template>
+                        </div>
+                        <p class="mt-2 text-[11px] text-ink-400" x-show="status(selectedOrder).isManual" x-cloak>Estado fijado manualmente por el equipo (ya no avanza automáticamente).</p>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <script>
+            var ADMIN_PASSWORD = 'yuma-admin-2026';
+            var ADMIN_SESSION_KEY = 'yuma_admin_session_v1';
+
+            function adminApp() {
+                return {
+                    authed: false,
+                    password: '',
+                    loginError: '',
+                    tab: 'dashboard',
+                    mobileNavOpen: false,
+                    tabs: [
+                        { id: 'dashboard', label: 'Panel de control', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
+                        { id: 'products', label: 'Productos', icon: '<path d="M21 7.5a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 7.5v9a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/><path d="M3.3 6.5 12 11.5l8.7-5M12 21.5v-10"/>' },
+                        { id: 'orders', label: 'Pedidos', icon: '<rect x="1" y="6" width="15" height="12" rx="1"/><path d="M16 10h3l3 3v5h-6z"/><circle cx="6" cy="19" r="1.5"/><circle cx="17.5" cy="19" r="1.5"/>' },
+                        { id: 'notifications', label: 'Notificaciones', icon: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>' },
+                        { id: 'payments', label: 'Datos de pago', icon: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>' },
+                        { id: 'customers', label: 'Clientes', icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>' },
+                        { id: 'visitors', label: 'Visitantes', icon: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/>' },
+                        { id: 'carts', label: 'Carritos abandonados', icon: '<circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.5 3h2l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 7.5H6"/>' }
+                    ],
+                    orders: [],
+                    accounts: [],
+                    notifications: [],
+                    visits: [],
+                    abandonedCarts: [],
+                    search: '',
+                    selectedOrder: null,
+                    ORDER_STEPS: [],
+                    products: [],
+                    productsLoaded: false,
+                    productSearch: '',
+                    disabledProducts: [],
+                    paymentForm: {},
+                    paymentsSaved: false,
+
+                    init() {
+                        this.ORDER_STEPS = window.ORDER_STEPS || [];
+                        this.authed = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
+                        if (this.authed) this.loadData();
+                    },
+                    login() {
+                        if (this.password === ADMIN_PASSWORD) {
+                            sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+                            this.authed = true;
+                            this.loginError = '';
+                            this.loadData();
+                        } else {
+                            this.loginError = 'Contraseña incorrecta.';
+                        }
+                    },
+                    logout() {
+                        sessionStorage.removeItem(ADMIN_SESSION_KEY);
+                        this.authed = false;
+                        this.password = '';
+                    },
+                    loadData() {
+                        this.orders = getAllOrders();
+                        this.accounts = getAllAccountsList();
+                        this.notifications = getNotifications();
+                        this.visits = getVisits();
+                        this.abandonedCarts = getAbandonedCarts();
+                        this.disabledProducts = getDisabledProducts();
+                        this.paymentForm = getPaymentConfig();
+                        this.loadProducts();
+                    },
+                    loadProducts() {
+                        var self = this;
+                        fetch('/assets/js/products-index.json')
+                            .then(function (r) { return r.json(); })
+                            .then(function (data) {
+                                self.products = Array.isArray(data) ? data : [];
+                                self.productsLoaded = true;
+                            })
+                            .catch(function () { self.productsLoaded = true; });
+                    },
+                    filteredProducts() {
+                        var q = this.productSearch.trim().toLowerCase();
+                        if (q.length < 2) return [];
+                        return this.products.filter(function (p) {
+                            return (p.name || '').toLowerCase().indexOf(q) > -1 || (p.brand || '').toLowerCase().indexOf(q) > -1 || (p.id || '') === q;
+                        }).slice(0, 30);
+                    },
+                    isDisabled(id) { return this.disabledProducts.indexOf(String(id)) > -1; },
+                    toggleProduct(id) {
+                        var disabled = this.isDisabled(id);
+                        setProductDisabled(id, !disabled);
+                        this.disabledProducts = getDisabledProducts();
+                    },
+                    disabledProductDetails() {
+                        var self = this;
+                        return this.products.filter(function (p) { return self.disabledProducts.indexOf(String(p.id)) > -1; });
+                    },
+                    filteredOrders() {
+                        var q = this.search.trim().toLowerCase();
+                        if (!q) return this.orders;
+                        return this.orders.filter(function (o) {
+                            return (o.orderNumber || '').toLowerCase().indexOf(q) > -1 || (o.email || '').toLowerCase().indexOf(q) > -1;
+                        });
+                    },
+                    select(order) { this.selectedOrder = order; },
+                    closeDetail() { this.selectedOrder = null; },
+                    openOrderFromNotification(orderNumber) {
+                        var order = this.orders.find(function (o) { return o.orderNumber === orderNumber; });
+                        if (order) { this.tab = 'orders'; this.selectedOrder = order; }
+                    },
+                    dismissNotif(id) {
+                        dismissNotification(id);
+                        this.notifications = getNotifications();
+                    },
+                    setStatus(order, idx) {
+                        setOrderStatus(order.orderNumber, idx);
+                        this.loadData();
+                        var updated = this.orders.find(function (o) { return o.orderNumber === order.orderNumber; });
+                        this.selectedOrder = updated || null;
+                    },
+                    savePayments() {
+                        if (!this.paymentForm.transferEnabled && !this.paymentForm.bizumEnabled) return;
+                        savePaymentConfig(this.paymentForm);
+                        this.paymentsSaved = true;
+                        setTimeout(() => { this.paymentsSaved = false; }, 2000);
+                    },
+                    clearVisitLog() {
+                        clearVisits();
+                        this.visits = [];
+                    },
+                    ordersForAccount(email) {
+                        email = (email || '').toLowerCase();
+                        return this.orders.filter(function (o) { return (o.email || '').toLowerCase() === email; });
+                    },
+                    totalSpent(email) {
+                        return this.ordersForAccount(email).reduce(function (s, o) { return s + (o.total || 0); }, 0);
+                    },
+                    status(order) { return orderStatus(order); },
+                    currentTab() {
+                        return this.tabs.find(t => t.id === this.tab) || this.tabs[0];
+                    },
+                    fmt(n) { return fmtEUR(n); },
+                    formatDate(d) {
+                        try {
+                            return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+                        } catch (e) { return ''; }
+                    },
+                    formatDateTime(d) {
+                        try {
+                            return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) + ' · ' + new Date(d).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                        } catch (e) { return ''; }
+                    }
+                };
+            }
+        </script>
+    </body>
+</html>

@@ -268,6 +268,27 @@
         updateOrder(orderNumber, { statusOverride: stepIndex });
     }
 
+    // Order emails — best-effort call to a small PHP endpoint (no backend
+    // otherwise exists on this static site). Failures are swallowed: email
+    // delivery must never block checkout or admin actions.
+    function sendOrderEmail(order, type, extra) {
+        try {
+            var payload = Object.assign({
+                type: type,
+                orderNumber: order.orderNumber,
+                email: order.email,
+                shippingName: order.shippingName,
+                items: order.items,
+                total: order.total
+            }, extra || {});
+            fetch('/assets/php/send-order-email.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch(function () {});
+        } catch (e) {}
+    }
+
     // Admin: disabled products — client-side only. There's no CMS behind this
     // static catalog, so "disabling" a product doesn't remove its page; it
     // just hides the buy button and flags it as unavailable wherever it's
@@ -624,6 +645,7 @@
     window.findOrder = findOrder;
     window.orderStatus = orderStatus;
     window.setOrderStatus = setOrderStatus;
+    window.sendOrderEmail = sendOrderEmail;
     window.ORDER_STEPS = ORDER_STEPS;
     window.getWishlist = getWishlist;
     window.isInWishlist = isInWishlist;

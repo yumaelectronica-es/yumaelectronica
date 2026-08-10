@@ -689,6 +689,7 @@
                     },
                     setStatus(order, idx) {
                         setOrderStatus(order.orderNumber, idx);
+                        sendOrderEmail(order, 'status', { statusLabel: (this.ORDER_STEPS[idx] || {}).label || '' });
                         this.loadData();
                         var updated = this.orders.find(function (o) { return o.orderNumber === order.orderNumber; });
                         this.selectedOrder = updated || null;

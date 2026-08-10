@@ -3723,7 +3723,7 @@ function checkoutPage() {
             this.confirmedTotal = this.finalTotal();
             this.confirmedForm = Object.assign({}, this.form);
             this.orderConfirmed = true;
-            saveOrder({
+            var newOrder = {
                 orderNumber: this.orderNumber,
                 email: this.confirmedForm.email,
                 date: new Date().toISOString(),
@@ -3738,7 +3738,9 @@ function checkoutPage() {
                 postalCode: this.confirmedForm.postalCode,
                 city: this.confirmedForm.city,
                 province: this.confirmedForm.province
-            });
+            };
+            saveOrder(newOrder);
+            sendOrderEmail(newOrder, 'confirmation');
             clearCart();
             saveCheckoutMeta({ postalCode: '', couponCode: '' });
         }

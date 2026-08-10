@@ -557,19 +557,41 @@
     }
 
     var toastTimer = null;
+    var toastHideTimer = null;
+    var TOAST_BASE = 'fixed bottom-5 left-1/2 z-toast flex items-center gap-2.5 rounded-2xl bg-ink-900 py-3.5 pl-3.5 pr-5 text-body-sm font-semibold text-white shadow-modal transition-all duration-300 ease-out';
+    var TOAST_HIDDEN = ' opacity-0 scale-95 -translate-x-1/2 translate-y-3 pointer-events-none';
+    var TOAST_VISIBLE = ' opacity-100 scale-100 -translate-x-1/2 translate-y-0';
     function showToast(msg) {
         var t = document.getElementById('cart-toast');
         if (!t) {
             t = document.createElement('div');
             t.id = 'cart-toast';
-            t.className = 'fixed bottom-5 left-1/2 z-toast -translate-x-1/2 rounded-full bg-ink-900 px-5 py-3 text-body-sm font-semibold text-white shadow-modal transition-opacity duration-300';
-            t.style.opacity = '0';
+            t.className = TOAST_BASE + TOAST_HIDDEN;
             document.body.appendChild(t);
         }
-        t.textContent = msg;
-        t.style.opacity = '1';
+        t.innerHTML =
+            '<span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500" id="cart-toast-icon">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0 text-white"><path d="m20 6-11 11-5-5"/></svg>' +
+            '</span>' +
+            '<span>' + msg + '</span>';
+
         clearTimeout(toastTimer);
-        toastTimer = setTimeout(function () { t.style.opacity = '0'; }, 2200);
+        clearTimeout(toastHideTimer);
+        // Force a reflow so the enter transition replays even if the toast
+        // is already visible when a second action fires in quick succession.
+        t.className = TOAST_BASE + TOAST_HIDDEN;
+        void t.offsetWidth;
+        t.className = TOAST_BASE + TOAST_VISIBLE;
+
+        var icon = document.getElementById('cart-toast-icon');
+        if (icon) {
+            icon.classList.add('animate-ping-once');
+            setTimeout(function () { icon.classList.remove('animate-ping-once'); }, 400);
+        }
+
+        toastHideTimer = setTimeout(function () {
+            t.className = TOAST_BASE + TOAST_HIDDEN;
+        }, 2200);
     }
 
     window.getCart = getCart;

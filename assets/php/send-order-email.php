@@ -269,6 +269,7 @@ if ($type === 'confirmation') {
         ];
     } catch (Throwable $e) {
         $attachment = null; // Don't block the email if PDF generation fails.
+        @file_put_contents(__DIR__ . '/debug-log.txt', date('Y-m-d H:i:s') . ' | PDF ERROR: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() . "\n", FILE_APPEND);
     }
 }
 

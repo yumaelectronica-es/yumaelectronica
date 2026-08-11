@@ -6,7 +6,8 @@ function ye_db() {
     static $pdo = null;
     if ($pdo !== null) return $pdo;
 
-    $configFile = __DIR__ . '/db-config.php';
+    require_once __DIR__ . '/config-path.php';
+    $configFile = ye_config_path('db-config.php');
     if (!is_file($configFile)) {
         throw new RuntimeException('db-config.php missing');
     }

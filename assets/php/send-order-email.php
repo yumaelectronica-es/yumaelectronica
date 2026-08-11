@@ -25,7 +25,8 @@ use PHPMailer\PHPMailer\Exception as PHPMailerException;
  * config file isn't there yet.
  */
 function sendMail($to, $fromName, $fromEmail, $subject, $htmlBody, $attachment = null) {
-    $configFile = __DIR__ . '/mail-config.php';
+    require_once __DIR__ . '/config-path.php';
+    $configFile = ye_config_path('mail-config.php');
     if (is_file($configFile)) {
         $cfg = require $configFile;
         $mailer = new PHPMailer(true);

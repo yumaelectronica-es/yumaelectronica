@@ -15,7 +15,8 @@ require __DIR__ . '/phpmailer/SMTP.php';
 use PHPMailer\PHPMailer\PHPMailer;
 
 function sendMail($to, $fromName, $fromEmail, $replyToEmail, $replyToName, $subject, $htmlBody) {
-    $configFile = __DIR__ . '/mail-config.php';
+    require_once __DIR__ . '/config-path.php';
+    $configFile = ye_config_path('mail-config.php');
     if (is_file($configFile)) {
         $cfg = require $configFile;
         $mailer = new PHPMailer(true);

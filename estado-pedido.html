@@ -3058,10 +3058,28 @@
                         </template>
                     </ol>
                     <p class="mt-2 rounded-lg bg-savings-50 px-4 py-3 text-body-sm font-semibold text-savings-700" x-show="status.isDelivered" x-cloak>Tu pedido ha sido entregado. ¡Gracias por comprar en Yuma Electrónica!</p>
-                    <p class="mt-2 flex items-center gap-2 rounded-lg bg-ink-50 px-4 py-3 text-body-sm text-ink-600" x-show="order.paymentProofName" x-cloak>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 text-savings-700"><path d="m5 13 4 4L19 7"/></svg>
-                        Justificante de pago recibido: <span class="font-semibold text-ink-900" x-text="order.paymentProofName"></span>
-                    </p>
+                    <div class="mt-4 rounded-xl border p-4 text-body-sm" :class="proofBoxClass()">
+                        <template x-if="order.paymentProofName && order.paymentProofStatus !== 'rejected'">
+                            <p class="flex items-center gap-2 text-ink-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 text-savings-700"><path d="m5 13 4 4L19 7"/></svg>
+                                Justificante recibido: <span class="font-semibold text-ink-900" x-text="order.paymentProofName"></span>
+                                <span class="ml-auto rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold" x-text="order.paymentProofStatus === 'approved' ? 'Aprobado' : 'En revisión'"></span>
+                            </p>
+                        </template>
+                        <template x-if="!order.paymentProofName || order.paymentProofStatus === 'rejected'">
+                            <div>
+                                <p class="font-semibold" x-text="order.paymentProofStatus === 'rejected' ? 'Tu justificante fue rechazado' : 'Sube tu justificante de pago'"></p>
+                                <p class="mt-1 text-caption" x-show="order.paymentProofStatus === 'rejected'" x-cloak x-text="order.paymentProofRejectionReason"></p>
+                                <p class="mt-1 text-caption text-ink-500" x-show="order.paymentProofStatus !== 'rejected'">Así confirmamos tu pago más rápido.</p>
+                                <label class="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-ink-300 py-3 text-center text-body-sm font-medium text-ink-600 transition hover:border-brand-300 hover:text-brand-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M12 3v12m0-12 4 4m-4-4-4 4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                                    <span class="truncate" x-text="proofFileName || 'Elegir archivo'"></span>
+                                    <input type="file" accept="image/*,.pdf" class="hidden" @change="onProofSelected($event)">
+                                </label>
+                                <button type="button" @click="submitProof()" :disabled="!proofFile" class="mt-2 inline-flex h-10 w-full items-center justify-center rounded-lg bg-brand-500 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50" x-text="order.paymentProofStatus === 'rejected' ? 'Reenviar justificante' : 'Enviar justificante'"></button>
+                            </div>
+                        </template>
+                    </div>
                 </div>
 
                 <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -3094,6 +3112,8 @@ function estadoPedidoPage() {
         order: null,
         status: null,
         searched: false,
+        proofFile: null,
+        proofFileName: '',
         init() {
             var params = new URLSearchParams(window.location.search);
             var pedido = params.get('pedido');
@@ -3115,6 +3135,32 @@ function estadoPedidoPage() {
                     self.status = orderStatus(self.order);
                     self.searched = true;
                 }
+            });
+        },
+        proofBoxClass() {
+            if (!this.order) return 'border-ink-100 bg-ink-50';
+            if (!this.order.paymentProofName) return 'border-ink-100 bg-ink-50';
+            if (this.order.paymentProofStatus === 'approved') return 'border-savings-500 bg-savings-50';
+            if (this.order.paymentProofStatus === 'rejected') return 'border-danger-200 bg-danger-50';
+            return 'border-amber-200 bg-amber-200/30';
+        },
+        onProofSelected(e) {
+            var file = e.target.files && e.target.files[0];
+            if (!file) return;
+            this.proofFile = file;
+            this.proofFileName = file.name;
+        },
+        submitProof() {
+            var self = this;
+            if (!this.proofFile || !this.order) return;
+            apiSaveProof(this.order.orderNumber, this.order.email, this.proofFileName).then(function (res) {
+                if (!res || !res.ok) { showToast('No se pudo enviar el justificante'); return; }
+                self.order.paymentProofName = self.proofFileName;
+                self.order.paymentProofStatus = 'pending';
+                self.order.paymentProofRejectionReason = null;
+                self.proofFile = null;
+                self.proofFileName = '';
+                showToast('Justificante enviado');
             });
         },
         fmt(n) { return fmtEUR(n); },

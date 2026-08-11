@@ -132,6 +132,10 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><rect x="1" y="6" width="15" height="12" rx="1"/><path d="M16 10h3l3 3v5h-6z"/><circle cx="6" cy="19" r="1.5"/><circle cx="17.5" cy="19" r="1.5"/></svg>
                                 <span class="flex-1">Pedidos</span>
                             </button>
+                            <button type="button" @click="tab = 'coupons'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'coupons' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M20.6 12.6 12.6 20.6a2 2 0 0 1-2.8 0L3 13.8V3h10.8l6.8 6.8a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+                                <span class="flex-1">Cupones</span>
+                            </button>
                             <button type="button" @click="tab = 'notifications'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'notifications' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
                                 <span class="flex-1">Notificaciones</span>
@@ -223,12 +227,9 @@
 
                             <input type="search" x-model="productSearch" placeholder="Buscar por nombre o marca…" class="mt-4 h-11 w-full max-w-sm rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
                             <p class="mt-2 text-[11px] text-ink-400" x-show="!productsLoaded" x-cloak>Cargando catálogo…</p>
-                            <p class="mt-2 flex items-center gap-1.5 text-caption text-ink-400" x-show="productsLoaded && productSearch.trim().length <= 1" x-cloak>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                                Escribe al menos 2 letras para buscar un producto y activar o desactivar su venta.
-                            </p>
+                            <p class="mt-2 text-[11px] text-ink-400" x-show="productsLoaded && !productSearch.trim()" x-cloak>Mostrando los primeros 60 productos. Usa el buscador para encontrar uno concreto.</p>
 
-                            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" x-show="productSearch.trim().length > 1">
+                            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" x-show="productsLoaded">
                                 <template x-for="p in filteredProducts()" :key="p.id">
                                     <div class="flex items-center gap-3 rounded-xl border border-ink-100 bg-white p-3 shadow-card">
                                         <img :src="p.image" :alt="p.name" class="h-14 w-14 shrink-0 rounded-lg border border-ink-100 object-contain p-1">
@@ -267,45 +268,90 @@
                                 <input type="search" x-model="search" placeholder="Buscar por número de pedido o email…" class="h-11 w-full max-w-sm rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
                             </div>
 
-                            <div class="mt-4 overflow-hidden overflow-x-auto rounded-2xl border border-ink-100 bg-white shadow-card">
-                                <table class="w-full text-left text-body-sm">
-                                    <thead class="border-b border-ink-100 bg-ink-50/60 text-caption text-ink-500">
-                                        <tr>
-                                            <th class="px-4 py-3 font-semibold">Pedido</th>
-                                            <th class="px-4 py-3 font-semibold">Fecha</th>
-                                            <th class="px-4 py-3 font-semibold">Cliente</th>
-                                            <th class="px-4 py-3 font-semibold">Total</th>
-                                            <th class="px-4 py-3 font-semibold">Pago</th>
-                                            <th class="px-4 py-3 font-semibold">Estado</th>
-                                            <th class="px-4 py-3"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <template x-for="order in filteredOrders()" :key="order.orderNumber">
-                                            <tr class="border-b border-ink-100 last:border-0 hover:bg-ink-50/50">
-                                                <td class="px-4 py-3 font-semibold text-ink-900" x-text="order.orderNumber"></td>
-                                                <td class="px-4 py-3 text-ink-500" x-text="formatDate(order.date)"></td>
-                                                <td class="px-4 py-3 text-ink-700" x-text="order.email"></td>
-                                                <td class="px-4 py-3 tabular-nums text-ink-900" x-text="fmt(order.total)"></td>
-                                                <td class="px-4 py-3">
-                                                    <span class="inline-flex items-center gap-1 text-caption" :class="order.paymentProofName ? 'text-savings-700' : 'text-ink-400'">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
-                                                        <span x-text="order.paymentProofName ? 'Justificante' : 'Sin justificante'"></span>
-                                                    </span>
-                                                </td>
-                                                <td class="px-4 py-3">
-                                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold" :class="status(order).isDelivered ? 'bg-savings-50 text-savings-700' : 'bg-amber-200 text-amber-900'" x-text="status(order).steps[status(order).stepIndex].label"></span>
-                                                </td>
-                                                <td class="px-4 py-3 text-right">
-                                                    <button type="button" @click="select(order)" class="text-caption font-semibold text-brand-600 hover:text-brand-700">Ver</button>
-                                                </td>
-                                            </tr>
-                                        </template>
-                                        <template x-if="filteredOrders().length === 0">
-                                            <tr><td colspan="7" class="px-4 py-10 text-center text-ink-400">No hay pedidos que coincidan con la búsqueda.</td></tr>
-                                        </template>
-                                    </tbody>
-                                </table>
+                            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                <template x-for="order in filteredOrders()" :key="order.orderNumber">
+                                    <button type="button" @click="select(order)" class="flex flex-col rounded-2xl border border-ink-100 bg-white p-4 text-left shadow-card transition duration-2 hover:-translate-y-0.5 hover:border-brand-200">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="min-w-0">
+                                                <p class="font-semibold text-ink-900" x-text="order.orderNumber"></p>
+                                                <p class="text-caption text-ink-500" x-text="formatDate(order.date)"></p>
+                                            </div>
+                                            <span class="shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold" :class="status(order).isDelivered ? 'bg-savings-50 text-savings-700' : 'bg-amber-200 text-amber-900'" x-text="status(order).steps[status(order).stepIndex].label"></span>
+                                        </div>
+                                        <p class="mt-2 truncate text-body-sm text-ink-700" x-text="order.email"></p>
+                                        <div class="mt-3 flex items-center justify-between gap-2 border-t border-ink-100 pt-3">
+                                            <span class="inline-flex items-center gap-1 text-caption" :class="proofStatusInfo(order).cls">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
+                                                <span x-text="proofStatusInfo(order).label"></span>
+                                            </span>
+                                            <span class="font-display font-bold text-ink-900 tabular-nums" x-text="fmt(order.total)"></span>
+                                        </div>
+                                    </button>
+                                </template>
+                                <p class="text-body-sm text-ink-400 sm:col-span-2 lg:col-span-3" x-show="filteredOrders().length === 0" x-cloak>No hay pedidos que coincidan con la búsqueda.</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="tab === 'coupons'">
+                        <div>
+                            <h1 class="text-h3 text-ink-900">Cupones de descuento</h1>
+                            <p class="mt-1 text-body-sm text-ink-500">Los cupones creados aquí se validan en tiempo real en el carrito y el checkout.</p>
+
+                            <div class="mt-4 rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
+                                <h2 class="text-h4 text-ink-900">Crear cupón</h2>
+                                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <div>
+                                        <label class="mb-1.5 block text-caption font-medium text-ink-600">Código</label>
+                                        <input type="text" x-model="couponForm.code" placeholder="Ej. VERANO15" class="h-11 w-full rounded-lg border-ink-200 text-body-sm uppercase text-ink-900 placeholder:normal-case focus:border-brand-500 focus:ring-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1.5 block text-caption font-medium text-ink-600">Tipo</label>
+                                        <select x-model="couponForm.type" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                            <option value="percent">Porcentaje (%)</option>
+                                            <option value="fixed">Importe fijo (€)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="mb-1.5 block text-caption font-medium text-ink-600" x-text="couponForm.type === 'fixed' ? 'Importe (€)' : 'Porcentaje (%)'"></label>
+                                        <input type="number" min="0" step="0.01" x-model.number="couponForm.value" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1.5 block text-caption font-medium text-ink-600">Etiqueta (opcional)</label>
+                                        <input type="text" x-model="couponForm.label" placeholder="Ej. 15% de descuento" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1.5 block text-caption font-medium text-ink-600">Pedido mínimo € (opcional)</label>
+                                        <input type="number" min="0" step="0.01" x-model.number="couponForm.minSubtotal" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                    </div>
+                                </div>
+                                <p class="mt-3 text-[11px] text-danger-600" x-show="couponFormError" x-cloak x-text="couponFormError"></p>
+                                <button type="button" @click="createCoupon()" class="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-brand-500 px-5 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600">Crear cupón</button>
+                            </div>
+
+                            <div class="mt-6 space-y-3">
+                                <template x-for="c in coupons" :key="c.id">
+                                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-100 bg-white p-4 shadow-card">
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-2">
+                                                <p class="font-mono font-semibold text-ink-900" x-text="c.code"></p>
+                                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="c.active ? 'bg-savings-50 text-savings-700' : 'bg-ink-100 text-ink-500'" x-text="c.active ? 'Activo' : 'Inactivo'"></span>
+                                            </div>
+                                            <p class="text-caption text-ink-500">
+                                                <span x-text="c.type === 'percent' ? c.value + '%' : fmt(c.value)"></span>
+                                                <template x-if="c.label"><span> · <span x-text="c.label"></span></span></template>
+                                                <template x-if="c.minSubtotal > 0"><span> · Mín. <span x-text="fmt(c.minSubtotal)"></span></span></template>
+                                            </p>
+                                        </div>
+                                        <div class="flex shrink-0 items-center gap-2">
+                                            <button type="button" @click="toggleCouponActive(c)" class="rounded-lg border px-3 py-1.5 text-caption font-semibold transition" :class="c.active ? 'border-ink-200 text-ink-600 hover:text-danger-600' : 'border-savings-500 text-savings-700 hover:bg-savings-50'" x-text="c.active ? 'Desactivar' : 'Activar'"></button>
+                                            <button type="button" @click="deleteCoupon(c)" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-400 hover:bg-danger-50 hover:text-danger-600" aria-label="Eliminar cupón">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                                <p class="text-body-sm text-ink-400" x-show="coupons.length === 0" x-cloak>Todavía no has creado ningún cupón.</p>
                             </div>
                         </div>
                     </template>
@@ -524,51 +570,138 @@
 
         <template x-if="selectedOrder">
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/55 p-4" @click.self="closeDetail()">
-                <div class="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-modal">
-                    <div class="flex items-start justify-between gap-3">
+                <div class="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-modal">
+                    <div class="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-ink-100 bg-white p-5">
                         <div>
                             <p class="text-caption text-ink-500">Pedido</p>
                             <p class="text-h4 text-ink-900" x-text="selectedOrder.orderNumber"></p>
                         </div>
-                        <button type="button" @click="closeDetail()" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-400 hover:bg-ink-50 hover:text-ink-700" aria-label="Cerrar">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex items-center rounded-full px-3 py-1.5 text-caption font-semibold" :class="status(selectedOrder).isDelivered ? 'bg-savings-50 text-savings-700' : 'bg-amber-200 text-amber-900'" x-text="status(selectedOrder).steps[status(selectedOrder).stepIndex].label"></span>
+                            <button type="button" @click="closeDetail()" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-400 hover:bg-ink-50 hover:text-ink-700" aria-label="Cerrar">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="mt-4 grid grid-cols-2 gap-3 text-body-sm">
-                        <div><p class="text-caption text-ink-500">Cliente</p><p class="text-ink-900" x-text="selectedOrder.email"></p></div>
-                        <div><p class="text-caption text-ink-500">Fecha</p><p class="text-ink-900" x-text="formatDate(selectedOrder.date)"></p></div>
-                        <div><p class="text-caption text-ink-500">Total</p><p class="font-semibold text-ink-900" x-text="fmt(selectedOrder.total)"></p></div>
-                        <div><p class="text-caption text-ink-500">Pago</p><p class="text-ink-900" x-text="selectedOrder.payment === 'bizum' ? 'Bizum' : 'Transferencia'"></p></div>
-                    </div>
+                    <div class="space-y-5 p-5">
+                        <div>
+                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Cliente</p>
+                            <div class="mt-2 grid grid-cols-1 gap-3 rounded-xl border border-ink-100 p-3 text-body-sm sm:grid-cols-2">
+                                <div><p class="text-caption text-ink-500">Email</p><p class="text-ink-900" x-text="selectedOrder.email"></p></div>
+                                <div><p class="text-caption text-ink-500">Teléfono</p><p class="text-ink-900" x-text="selectedOrder.phone || '—'"></p></div>
+                                <div><p class="text-caption text-ink-500">Fecha del pedido</p><p class="text-ink-900" x-text="formatDate(selectedOrder.date)"></p></div>
+                                <div><p class="text-caption text-ink-500">Forma de pago</p><p class="text-ink-900" x-text="selectedOrder.payment === 'bizum' ? 'Bizum' : 'Transferencia bancaria'"></p></div>
+                            </div>
+                        </div>
 
-                    <div class="mt-4 rounded-xl border border-ink-100 p-3 text-body-sm">
-                        <p class="font-semibold text-ink-900" x-text="selectedOrder.shippingName"></p>
-                        <p class="text-ink-600" x-text="selectedOrder.shippingAddress"></p>
-                        <p class="text-ink-600"><span x-text="selectedOrder.postalCode"></span> <span x-text="selectedOrder.city"></span>, <span x-text="selectedOrder.province"></span></p>
-                    </div>
-
-                    <div class="mt-4 space-y-1.5">
-                        <template x-for="item in selectedOrder.items" :key="item.name + item.qty">
-                            <div class="flex items-center justify-between gap-3 text-body-sm text-ink-700">
-                                <span class="min-w-0 truncate"><span x-text="item.qty"></span>&times; <span x-text="item.name"></span></span>
-                                <span class="shrink-0 tabular-nums" x-text="fmt(item.unitPrice * item.qty)"></span>
+                        <template x-if="selectedOrder.isCompany">
+                            <div>
+                                <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Empresa</p>
+                                <div class="mt-2 rounded-xl border border-ink-100 p-3 text-body-sm">
+                                    <p class="font-semibold text-ink-900" x-text="selectedOrder.companyName"></p>
+                                    <p class="text-ink-600">CIF/NIF: <span x-text="selectedOrder.companyTaxId"></span></p>
+                                </div>
                             </div>
                         </template>
-                    </div>
 
-                    <div class="mt-4 rounded-xl p-3 text-body-sm" :class="selectedOrder.paymentProofName ? 'bg-savings-50 text-savings-700' : 'bg-ink-50 text-ink-500'">
-                        <span x-text="selectedOrder.paymentProofName ? 'Justificante recibido: ' + selectedOrder.paymentProofName : 'Sin justificante de pago todavía.'"></span>
-                    </div>
-
-                    <div class="mt-5">
-                        <p class="text-caption font-semibold text-ink-600">Actualizar estado</p>
-                        <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                            <template x-for="(step, idx) in ORDER_STEPS" :key="step.key">
-                                <button type="button" @click="setStatus(selectedOrder, idx)" class="rounded-lg border px-3 py-2 text-caption font-semibold transition" :class="status(selectedOrder).stepIndex === idx ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-ink-200 text-ink-600 hover:border-brand-300'" x-text="step.label"></button>
-                            </template>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Dirección de envío</p>
+                                <div class="mt-2 rounded-xl border border-ink-100 p-3 text-body-sm">
+                                    <p class="font-semibold text-ink-900" x-text="selectedOrder.shippingName"></p>
+                                    <p class="text-ink-600" x-text="selectedOrder.shippingAddress"></p>
+                                    <p class="text-ink-600"><span x-text="selectedOrder.postalCode"></span> <span x-text="selectedOrder.city"></span>, <span x-text="selectedOrder.province"></span></p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Dirección de facturación</p>
+                                <div class="mt-2 rounded-xl border border-ink-100 p-3 text-body-sm">
+                                    <template x-if="selectedOrder.billingDifferent">
+                                        <div>
+                                            <p class="text-ink-600" x-text="selectedOrder.billingAddress"></p>
+                                            <p class="text-ink-600"><span x-text="selectedOrder.billingPostalCode"></span> <span x-text="selectedOrder.billingCity"></span>, <span x-text="selectedOrder.billingProvince"></span></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="!selectedOrder.billingDifferent">
+                                        <p class="text-ink-400">Igual que la dirección de envío.</p>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
-                        <p class="mt-2 text-[11px] text-ink-400" x-show="status(selectedOrder).isManual" x-cloak>Estado fijado manualmente por el equipo (ya no avanza automáticamente).</p>
+
+                        <div>
+                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Artículos</p>
+                            <div class="mt-2 space-y-1.5 rounded-xl border border-ink-100 p-3">
+                                <template x-for="item in selectedOrder.items" :key="item.name + item.qty">
+                                    <div class="flex items-center justify-between gap-3 text-body-sm text-ink-700">
+                                        <span class="min-w-0 truncate"><span x-text="item.qty"></span>&times; <span x-text="item.name"></span></span>
+                                        <span class="shrink-0 tabular-nums" x-text="fmt(item.unitPrice * item.qty)"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Totales</p>
+                            <div class="mt-2 space-y-1.5 rounded-xl border border-ink-100 p-3 text-body-sm">
+                                <div class="flex items-center justify-between"><span class="text-ink-500">Subtotal productos</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.productsSubtotal)"></span></div>
+                                <template x-if="selectedOrder.warrantySubtotal"><div class="flex items-center justify-between"><span class="text-ink-500">Garantía ampliada</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.warrantySubtotal)"></span></div></template>
+                                <template x-if="selectedOrder.removalSubtotal"><div class="flex items-center justify-between"><span class="text-ink-500">Retirada de equipo</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.removalSubtotal)"></span></div></template>
+                                <template x-if="selectedOrder.installationSubtotal"><div class="flex items-center justify-between"><span class="text-ink-500">Instalación</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.installationSubtotal)"></span></div></template>
+                                <template x-if="selectedOrder.couponCode"><div class="flex items-center justify-between text-savings-700"><span x-text="'Cupón ' + selectedOrder.couponCode"></span><span class="tabular-nums" x-text="'−' + fmt(selectedOrder.couponDiscountAmount)"></span></div></template>
+                                <div class="flex items-center justify-between"><span class="text-ink-500" x-text="selectedOrder.shippingCost > 0 ? 'Envío' : 'Envío (gratis)'"></span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.shippingCost)"></span></div>
+                                <div class="flex items-center justify-between border-t border-ink-100 pt-1.5 text-body font-bold text-ink-900"><span>Total</span><span class="tabular-nums" x-text="fmt(selectedOrder.total)"></span></div>
+                            </div>
+                        </div>
+
+                        <template x-if="selectedOrder.notes">
+                            <div>
+                                <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Notas del cliente</p>
+                                <p class="mt-2 rounded-xl border border-ink-100 p-3 text-body-sm text-ink-700" x-text="selectedOrder.notes"></p>
+                            </div>
+                        </template>
+
+                        <div>
+                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Justificante de pago</p>
+                            <div class="mt-2 rounded-xl border p-3 text-body-sm" :class="proofBoxClass(selectedOrder)">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="font-semibold" x-text="selectedOrder.paymentProofName ? selectedOrder.paymentProofName : 'Sin justificante todavía'"></span>
+                                    <span class="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold" x-text="proofStatusInfo(selectedOrder).label"></span>
+                                </div>
+                                <p class="mt-1 text-caption" x-show="selectedOrder.paymentProofRejectionReason" x-cloak x-text="'Motivo: ' + selectedOrder.paymentProofRejectionReason"></p>
+
+                                <template x-if="selectedOrder.paymentProofName && selectedOrder.paymentProofStatus !== 'approved'">
+                                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                                        <button type="button" @click="approveProof(selectedOrder)" class="inline-flex h-9 items-center justify-center rounded-lg bg-savings-500 px-4 text-caption font-semibold text-white transition">Aprobar justificante</button>
+                                        <button type="button" @click="rejectingProof = !rejectingProof" class="inline-flex h-9 items-center justify-center rounded-lg border border-danger-200 px-4 text-caption font-semibold text-danger-600 transition hover:bg-danger-50">Rechazar justificante</button>
+                                    </div>
+                                </template>
+                                <template x-if="rejectingProof">
+                                    <div class="mt-3">
+                                        <input type="text" x-model="rejectReason" placeholder="Motivo del rechazo (se lo comunicaremos al cliente)" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                        <div class="mt-2 flex items-center gap-2">
+                                            <button type="button" @click="rejectProof(selectedOrder)" class="inline-flex h-9 items-center justify-center rounded-lg bg-danger-600 px-4 text-caption font-semibold text-white transition hover:bg-danger-700">Confirmar rechazo</button>
+                                            <button type="button" @click="rejectingProof = false; rejectReason = ''" class="inline-flex h-9 items-center justify-center rounded-lg border border-ink-200 px-4 text-caption font-semibold text-ink-600 transition">Cancelar</button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Actualizar estado</p>
+                            <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                <template x-for="(step, idx) in ORDER_STEPS" :key="step.key">
+                                    <button type="button" @click="setStatus(selectedOrder, idx)" :disabled="!canSetStatus(selectedOrder, idx)" class="rounded-lg border px-3 py-2 text-caption font-semibold transition disabled:cursor-not-allowed disabled:opacity-40" :class="status(selectedOrder).stepIndex === idx ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-ink-200 text-ink-600 hover:border-brand-300'" x-text="step.label"></button>
+                                </template>
+                            </div>
+                            <p class="mt-2 text-[11px] text-ink-400" x-show="status(selectedOrder).isManual" x-cloak>Estado fijado manualmente por el equipo (ya no avanza automáticamente).</p>
+                            <p class="mt-2 flex items-center gap-1.5 text-[11px] text-amber-900" x-show="selectedOrder.paymentProofStatus !== 'approved'" x-cloak>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+                                El justificante debe estar aprobado para avanzar el estado, y cada paso debe seguir al anterior.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -591,6 +724,7 @@
                         { id: 'dashboard', label: 'Panel de control', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
                         { id: 'products', label: 'Productos', icon: '<path d="M21 7.5a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 7.5v9a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/><path d="M3.3 6.5 12 11.5l8.7-5M12 21.5v-10"/>' },
                         { id: 'orders', label: 'Pedidos', icon: '<rect x="1" y="6" width="15" height="12" rx="1"/><path d="M16 10h3l3 3v5h-6z"/><circle cx="6" cy="19" r="1.5"/><circle cx="17.5" cy="19" r="1.5"/>' },
+                        { id: 'coupons', label: 'Cupones', icon: '<path d="M20.6 12.6 12.6 20.6a2 2 0 0 1-2.8 0L3 13.8V3h10.8l6.8 6.8a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/>' },
                         { id: 'notifications', label: 'Notificaciones', icon: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>' },
                         { id: 'payments', label: 'Datos de pago', icon: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>' },
                         { id: 'customers', label: 'Clientes', icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>' },
@@ -611,6 +745,11 @@
                     disabledProducts: [],
                     paymentForm: {},
                     paymentsSaved: false,
+                    coupons: [],
+                    couponForm: { code: '', type: 'percent', value: '', label: '', minSubtotal: '' },
+                    couponFormError: '',
+                    rejectingProof: false,
+                    rejectReason: '',
 
                     init() {
                         this.ORDER_STEPS = window.ORDER_STEPS || [];
@@ -643,6 +782,13 @@
                         this.paymentForm = getPaymentConfig();
                         this.loadProducts();
                         this.loadOrdersFromApi();
+                        this.loadCoupons();
+                    },
+                    loadCoupons() {
+                        var self = this;
+                        apiListCoupons().then(function (res) {
+                            if (res && res.ok && Array.isArray(res.coupons)) self.coupons = res.coupons;
+                        });
                     },
                     loadOrdersFromApi() {
                         var self = this;
@@ -677,10 +823,10 @@
                     },
                     filteredProducts() {
                         var q = this.productSearch.trim().toLowerCase();
-                        if (q.length < 2) return [];
+                        if (!q) return this.products.slice(0, 60);
                         return this.products.filter(function (p) {
                             return (p.name || '').toLowerCase().indexOf(q) > -1 || (p.brand || '').toLowerCase().indexOf(q) > -1 || (p.id || '') === q;
-                        }).slice(0, 30);
+                        }).slice(0, 60);
                     },
                     isDisabled(id) { return this.disabledProducts.indexOf(String(id)) > -1; },
                     toggleProduct(id) {
@@ -699,8 +845,85 @@
                             return (o.orderNumber || '').toLowerCase().indexOf(q) > -1 || (o.email || '').toLowerCase().indexOf(q) > -1;
                         });
                     },
-                    select(order) { this.selectedOrder = order; },
+                    select(order) {
+                        this.selectedOrder = order;
+                        this.rejectingProof = false;
+                        this.rejectReason = '';
+                    },
                     closeDetail() { this.selectedOrder = null; },
+                    proofStatusInfo(order) {
+                        if (!order.paymentProofName) return { label: 'Sin justificante', cls: 'text-ink-400' };
+                        if (order.paymentProofStatus === 'approved') return { label: 'Aprobado', cls: 'text-savings-700' };
+                        if (order.paymentProofStatus === 'rejected') return { label: 'Rechazado', cls: 'text-danger-600' };
+                        return { label: 'Pendiente de revisión', cls: 'text-amber-900' };
+                    },
+                    proofBoxClass(order) {
+                        if (!order.paymentProofName) return 'border-ink-100 bg-ink-50 text-ink-500';
+                        if (order.paymentProofStatus === 'approved') return 'border-savings-500 bg-savings-50 text-savings-700';
+                        if (order.paymentProofStatus === 'rejected') return 'border-danger-200 bg-danger-50 text-danger-600';
+                        return 'border-amber-200 bg-amber-200/30 text-amber-900';
+                    },
+                    canSetStatus(order, idx) {
+                        var cur = this.status(order).stepIndex;
+                        if (idx <= cur) return true;
+                        if (idx === cur + 1 && order.paymentProofStatus === 'approved') return true;
+                        return false;
+                    },
+                    approveProof(order) {
+                        apiApproveProof(order.orderNumber).then(function (res) {
+                            if (!res || !res.ok) { showToast('No se pudo aprobar el justificante'); return; }
+                            order.paymentProofStatus = 'approved';
+                            order.paymentProofRejectionReason = null;
+                            showToast('Justificante aprobado');
+                        });
+                    },
+                    rejectProof(order) {
+                        var self = this;
+                        var reason = this.rejectReason.trim() || 'El justificante no es válido, súbelo de nuevo.';
+                        apiRejectProof(order.orderNumber, reason).then(function (res) {
+                            if (!res || !res.ok) { showToast('No se pudo rechazar el justificante'); return; }
+                            order.paymentProofStatus = 'rejected';
+                            order.paymentProofRejectionReason = reason;
+                            self.rejectingProof = false;
+                            self.rejectReason = '';
+                            showToast('Justificante rechazado');
+                        });
+                    },
+                    createCoupon() {
+                        var self = this;
+                        var f = this.couponForm;
+                        this.couponFormError = '';
+                        if (!f.code.trim() || !f.value || Number(f.value) <= 0) {
+                            this.couponFormError = 'Completa el código y un valor válido.';
+                            return;
+                        }
+                        apiCreateCoupon({
+                            code: f.code.trim().toUpperCase(),
+                            type: f.type,
+                            value: Number(f.value),
+                            label: f.label,
+                            minSubtotal: Number(f.minSubtotal) || 0
+                        }).then(function (res) {
+                            if (!res || !res.ok) {
+                                self.couponFormError = (res && res.error === 'duplicate_code') ? 'Ya existe un cupón con ese código.' : 'No se pudo crear el cupón.';
+                                return;
+                            }
+                            self.couponForm = { code: '', type: 'percent', value: '', label: '', minSubtotal: '' };
+                            self.loadCoupons();
+                            showToast('Cupón creado');
+                        });
+                    },
+                    toggleCouponActive(c) {
+                        apiToggleCoupon(c.id, !c.active).then(function (res) {
+                            if (res && res.ok) c.active = !c.active;
+                        });
+                    },
+                    deleteCoupon(c) {
+                        var self = this;
+                        apiDeleteCoupon(c.id).then(function (res) {
+                            if (res && res.ok) self.coupons = self.coupons.filter(function (x) { return x.id !== c.id; });
+                        });
+                    },
                     openOrderFromNotification(orderNumber) {
                         var order = this.orders.find(function (o) { return o.orderNumber === orderNumber; });
                         if (order) { this.tab = 'orders'; this.selectedOrder = order; }
@@ -710,12 +933,22 @@
                         this.notifications = getNotifications();
                     },
                     setStatus(order, idx) {
-                        setOrderStatus(order.orderNumber, idx);
-                        apiUpdateOrderStatus(order.orderNumber, idx);
-                        sendOrderEmail(order, 'status', { statusLabel: (this.ORDER_STEPS[idx] || {}).label || '' });
-                        this.loadData();
-                        var updated = this.orders.find(function (o) { return o.orderNumber === order.orderNumber; });
-                        this.selectedOrder = updated || null;
+                        if (!this.canSetStatus(order, idx)) {
+                            showToast('El justificante debe estar aprobado y los pasos deben seguirse en orden.');
+                            return;
+                        }
+                        var self = this;
+                        apiUpdateOrderStatus(order.orderNumber, idx).then(function (res) {
+                            if (!res || !res.ok) {
+                                showToast('No se pudo actualizar el estado del pedido.');
+                                return;
+                            }
+                            setOrderStatus(order.orderNumber, idx);
+                            sendOrderEmail(order, 'status', { statusLabel: (self.ORDER_STEPS[idx] || {}).label || '' });
+                            self.loadData();
+                            var updated = self.orders.find(function (o) { return o.orderNumber === order.orderNumber; });
+                            self.selectedOrder = updated || null;
+                        });
                     },
                     savePayments() {
                         if (!this.paymentForm.transferEnabled && !this.paymentForm.bizumEnabled) return;

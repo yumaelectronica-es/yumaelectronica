@@ -64,14 +64,6 @@
         return item.basePrice + item.warrantyCost + item.removalCost + item.installationCost;
     }
 
-    // Demo coupon codes — this is a static site with no order backend, so these are
-    // validated client-side for demonstration only. Wire this up to a real discount
-    // service before taking payments.
-    var DEMO_COUPONS = {
-        'BIENVENIDA10': { type: 'percent', value: 10, label: '10% de descuento', minSubtotal: 0 },
-        'AHORRO20': { type: 'percent', value: 20, label: '20% en pedidos +500€', minSubtotal: 500 },
-    };
-
     function taxRegionForPostal(cp) {
         if (!/^\d{5}$/.test(cp || '')) return 'peninsula';
         var prefix = cp.slice(0, 2);
@@ -317,6 +309,39 @@
     }
     function apiUpdateOrderDetails(orderNumber, email, patch) {
         return apiCall('update-details', { orderNumber: orderNumber, email: email, patch: patch }).catch(function () { return { ok: false }; });
+    }
+    function apiApproveProof(orderNumber) {
+        return apiCall('approve-proof', { orderNumber: orderNumber, adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false }; });
+    }
+    function apiRejectProof(orderNumber, reason) {
+        return apiCall('reject-proof', { orderNumber: orderNumber, reason: reason, adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false }; });
+    }
+
+    // Coupons API — real backend (MySQL) so discount codes are managed from
+    // the admin panel instead of hardcoded in the front-end.
+    function couponApiCall(action, extra) {
+        var payload = Object.assign({ action: action }, extra || {});
+        return fetch('/assets/php/coupons-api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+        }).then(function (r) { return r.json(); });
+    }
+    function apiValidateCoupon(code, subtotal) {
+        return couponApiCall('validate', { code: code, subtotal: subtotal }).catch(function () { return { ok: false, valid: false, error: 'No se pudo validar el cupón.' }; });
+    }
+    function apiListCoupons() {
+        return couponApiCall('list', { adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false, coupons: [] }; });
+    }
+    function apiCreateCoupon(coupon) {
+        return couponApiCall('create', Object.assign({ adminKey: YE_ADMIN_KEY }, coupon)).catch(function () { return { ok: false }; });
+    }
+    function apiToggleCoupon(id, active) {
+        return couponApiCall('toggle', { id: id, active: active, adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false }; });
+    }
+    function apiDeleteCoupon(id) {
+        return couponApiCall('delete', { id: id, adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false }; });
     }
     function sendAccountEmail(account) {
         try {
@@ -665,7 +690,6 @@
     window.cartCount = cartCount;
     window.cartTotal = cartTotal;
     window.showToast = showToast;
-    window.DEMO_COUPONS = DEMO_COUPONS;
     window.taxRegionForPostal = taxRegionForPostal;
     window.isIslandPostal = isIslandPostal;
     window.orderTotals = orderTotals;
@@ -693,6 +717,13 @@
     window.apiSaveProof = apiSaveProof;
     window.apiListOrdersByEmail = apiListOrdersByEmail;
     window.apiUpdateOrderDetails = apiUpdateOrderDetails;
+    window.apiApproveProof = apiApproveProof;
+    window.apiRejectProof = apiRejectProof;
+    window.apiValidateCoupon = apiValidateCoupon;
+    window.apiListCoupons = apiListCoupons;
+    window.apiCreateCoupon = apiCreateCoupon;
+    window.apiToggleCoupon = apiToggleCoupon;
+    window.apiDeleteCoupon = apiDeleteCoupon;
     window.sendAccountEmail = sendAccountEmail;
     window.ORDER_STEPS = ORDER_STEPS;
     window.getWishlist = getWishlist;

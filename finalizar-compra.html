@@ -3401,7 +3401,7 @@
                             <div class="flex gap-2">
                                 <input id="co-coupon-code" type="text" x-model="couponInput" @keydown.enter.prevent="applyCoupon()" placeholder="Ej. BIENVENIDA10"
                                        class="h-11 min-w-0 flex-1 rounded-lg border-ink-200 text-body-sm uppercase text-ink-900 placeholder:normal-case focus:border-brand-500 focus:ring-brand-500">
-                                <button type="button" @click="applyCoupon()" class="shrink-0 rounded-lg border border-ink-200 px-4 text-body-sm font-semibold text-ink-700 transition hover:border-brand-500 hover:text-brand-600">Aplicar</button>
+                                <button type="button" @click="applyCoupon()" :disabled="couponChecking" class="shrink-0 rounded-lg border border-ink-200 px-4 text-body-sm font-semibold text-ink-700 transition hover:border-brand-500 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50" x-text="couponChecking ? 'Comprobando…' : 'Aplicar'"></button>
                             </div>
                             <p class="mt-1.5 text-[11px] text-danger-600" x-show="couponError" x-cloak x-text="couponError"></p>
                         </div>
@@ -3571,6 +3571,7 @@ function checkoutPage() {
         appliedCoupon: null,
         couponInput: '',
         couponError: '',
+        couponChecking: false,
         orderConfirmed: false,
         orderNumber: '',
         confirmedTotal: 0,
@@ -3589,8 +3590,11 @@ function checkoutPage() {
             if (!this.paymentConfig.transferEnabled && this.paymentConfig.bizumEnabled) this.form.payment = 'bizum';
             var meta = getCheckoutMeta();
             this.form.postalCode = meta.postalCode || '';
-            if (meta.couponCode && DEMO_COUPONS[meta.couponCode]) {
-                this.appliedCoupon = Object.assign({ code: meta.couponCode }, DEMO_COUPONS[meta.couponCode]);
+            if (meta.couponCode) {
+                var self = this;
+                apiValidateCoupon(meta.couponCode, this.grossTotal()).then(function (res) {
+                    if (res && res.ok && res.valid) self.appliedCoupon = res.coupon;
+                });
             }
             var session = getSession();
             if (session) this.applyAccount(session);
@@ -3648,19 +3652,22 @@ function checkoutPage() {
         totals() { return orderTotals(this.cart, this.form.postalCode, this.appliedCoupon, this.form.shippingMethod); },
         grossTotal() { return this.totals().grossTotal; },
         applyCoupon() {
+            var self = this;
             var code = this.couponInput.trim().toUpperCase();
             this.couponError = '';
             if (!code) { this.couponError = 'Introduce un código.'; return; }
-            var coupon = DEMO_COUPONS[code];
-            if (!coupon) { this.couponError = 'Este código no es válido.'; return; }
-            if (this.grossTotal() < coupon.minSubtotal) {
-                this.couponError = 'Este código requiere un pedido mínimo de ' + fmtEUR(coupon.minSubtotal) + '.';
-                return;
-            }
-            this.appliedCoupon = Object.assign({ code: code }, coupon);
-            this.couponInput = '';
-            this.persistMeta();
-            showToast('Cupón ' + code + ' aplicado');
+            this.couponChecking = true;
+            apiValidateCoupon(code, this.grossTotal()).then(function (res) {
+                self.couponChecking = false;
+                if (!res || !res.ok || !res.valid) {
+                    self.couponError = (res && res.error) || 'Este código no es válido.';
+                    return;
+                }
+                self.appliedCoupon = res.coupon;
+                self.couponInput = '';
+                self.persistMeta();
+                showToast('Cupón ' + code + ' aplicado');
+            });
         },
         removeCoupon() { this.appliedCoupon = null; this.couponError = ''; this.persistMeta(); },
         copyField(text, label) {

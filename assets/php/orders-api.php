@@ -85,7 +85,26 @@ function rowToOrder($row) {
         'statusOverride' => $row['status_override'] !== null ? (int) $row['status_override'] : null,
         'paymentProofName' => $row['payment_proof_name'],
         'paymentProofAt' => $row['payment_proof_at'],
+        'paymentProofStatus' => $row['payment_proof_status'] ?? null,
+        'paymentProofRejectionReason' => $row['payment_proof_rejection_reason'] ?? null,
     ];
+}
+
+// Mirrors the time-based simulation in cart.js's orderStatus(), used here
+// only to know the CURRENT effective step so admin status changes can be
+// gated (must be approved + sequential); the front-end remains the source
+// of truth for what the customer sees.
+function currentStatusIndex($row) {
+    if ($row['status_override'] !== null) return (int) $row['status_override'];
+    $placedAt = strtotime($row['order_date']);
+    $hoursElapsed = ($placedAt !== false) ? (time() - $placedAt) / 3600 : 0;
+    $express = ($row['shipping_method'] ?? '') === 'express';
+    $tPaid = 3; $tPreparing = 14; $tShipped = $express ? 20 : 30; $tDelivered = $express ? 48 : 120;
+    if ($hoursElapsed >= $tDelivered) return 4;
+    if ($hoursElapsed >= $tShipped) return 3;
+    if ($hoursElapsed >= $tPreparing) return 2;
+    if ($hoursElapsed >= $tPaid) return 1;
+    return 0;
 }
 
 try {
@@ -178,13 +197,66 @@ try {
         requireAdmin($in);
         $orderNumber = preg_replace('/[^A-Z0-9\-]/', '', strtoupper($in['orderNumber'] ?? ''));
         $statusIndex = isset($in['statusIndex']) ? (int) $in['statusIndex'] : null;
-        if (!$orderNumber || $statusIndex === null) {
+        if (!$orderNumber || $statusIndex === null || $statusIndex < 0 || $statusIndex > 4) {
             http_response_code(400);
             echo json_encode(['ok' => false, 'error' => 'missing_fields']);
             exit;
         }
+
+        $check = $pdo->prepare("SELECT * FROM orders WHERE order_number = ? LIMIT 1");
+        $check->execute([$orderNumber]);
+        $row = $check->fetch();
+        if (!$row) {
+            http_response_code(404);
+            echo json_encode(['ok' => false, 'error' => 'not_found']);
+            exit;
+        }
+
+        $currentIndex = currentStatusIndex($row);
+        if ($statusIndex > $currentIndex) {
+            if (($row['payment_proof_status'] ?? null) !== 'approved') {
+                http_response_code(403);
+                echo json_encode(['ok' => false, 'error' => 'proof_not_approved']);
+                exit;
+            }
+            if ($statusIndex > $currentIndex + 1) {
+                http_response_code(403);
+                echo json_encode(['ok' => false, 'error' => 'cannot_skip_steps']);
+                exit;
+            }
+        }
+
         $stmt = $pdo->prepare("UPDATE orders SET status_override = ? WHERE order_number = ?");
         $stmt->execute([$statusIndex, $orderNumber]);
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    if ($action === 'approve-proof') {
+        requireAdmin($in);
+        $orderNumber = preg_replace('/[^A-Z0-9\-]/', '', strtoupper($in['orderNumber'] ?? ''));
+        if (!$orderNumber) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'missing_fields']);
+            exit;
+        }
+        $stmt = $pdo->prepare("UPDATE orders SET payment_proof_status = 'approved', payment_proof_rejection_reason = NULL WHERE order_number = ?");
+        $stmt->execute([$orderNumber]);
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    if ($action === 'reject-proof') {
+        requireAdmin($in);
+        $orderNumber = preg_replace('/[^A-Z0-9\-]/', '', strtoupper($in['orderNumber'] ?? ''));
+        $reason = trim((string) ($in['reason'] ?? ''));
+        if (!$orderNumber) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'missing_fields']);
+            exit;
+        }
+        $stmt = $pdo->prepare("UPDATE orders SET payment_proof_status = 'rejected', payment_proof_rejection_reason = ? WHERE order_number = ?");
+        $stmt->execute([$reason !== '' ? $reason : 'El justificante no es válido, súbelo de nuevo.', $orderNumber]);
         echo json_encode(['ok' => true]);
         exit;
     }
@@ -269,7 +341,8 @@ try {
             echo json_encode(['ok' => false, 'error' => 'missing_fields']);
             exit;
         }
-        $stmt = $pdo->prepare("UPDATE orders SET payment_proof_name = ?, payment_proof_at = NOW()
+        $stmt = $pdo->prepare("UPDATE orders SET payment_proof_name = ?, payment_proof_at = NOW(),
+            payment_proof_status = 'pending', payment_proof_rejection_reason = NULL
             WHERE order_number = ? AND LOWER(email) = ?");
         $stmt->execute([$in['paymentProofName'] ?? '', $orderNumber, $email]);
         echo json_encode(['ok' => true]);

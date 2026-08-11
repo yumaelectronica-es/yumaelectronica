@@ -52,7 +52,28 @@ try {
         INDEX (order_number)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    echo json_encode(['ok' => true, 'message' => 'orders table ready']);
+    // Idempotent column additions for the payment-proof approval workflow
+    // (orders table already existed before this feature was added).
+    $existingCols = $pdo->query("SHOW COLUMNS FROM orders")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('payment_proof_status', $existingCols, true)) {
+        $pdo->exec("ALTER TABLE orders ADD COLUMN payment_proof_status VARCHAR(20) NULL AFTER payment_proof_at");
+    }
+    if (!in_array('payment_proof_rejection_reason', $existingCols, true)) {
+        $pdo->exec("ALTER TABLE orders ADD COLUMN payment_proof_rejection_reason VARCHAR(255) NULL AFTER payment_proof_status");
+    }
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS coupons (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        code VARCHAR(40) NOT NULL UNIQUE,
+        type VARCHAR(10) NOT NULL DEFAULT 'percent',
+        value DECIMAL(10,2) NOT NULL,
+        label VARCHAR(190) NULL,
+        min_subtotal DECIMAL(10,2) NOT NULL DEFAULT 0,
+        active TINYINT(1) NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    echo json_encode(['ok' => true, 'message' => 'orders/coupons tables ready']);
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => $e->getMessage()]);

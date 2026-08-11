@@ -3720,24 +3720,54 @@ function checkoutPage() {
         },
         submitOrder() {
             this.orderNumber = 'YE-' + Date.now().toString().slice(-8);
-            this.confirmedTotal = this.finalTotal();
+            var t = this.totals();
+            this.confirmedTotal = t.finalTotal;
             this.confirmedForm = Object.assign({}, this.form);
             this.orderConfirmed = true;
+            var f = this.confirmedForm;
             var newOrder = {
                 orderNumber: this.orderNumber,
-                email: this.confirmedForm.email,
+                email: f.email,
+                phone: f.phone,
                 date: new Date().toISOString(),
                 items: this.cart.map(function (i) {
-                    return { name: i.name, image: i.image, qty: i.qty, unitPrice: unitPrice(i) };
+                    return {
+                        name: i.name, image: i.image, qty: i.qty, unitPrice: unitPrice(i),
+                        basePrice: i.basePrice, warrantyCost: i.warrantyCost,
+                        removalCost: i.removalCost, installationCost: i.installationCost,
+                        warranty: i.warranty
+                    };
                 }),
                 total: this.confirmedTotal,
-                shippingMethod: this.confirmedForm.shippingMethod,
-                payment: this.confirmedForm.payment,
-                shippingName: this.confirmedForm.isCompany ? this.confirmedForm.companyName : this.confirmedForm.fullName,
-                shippingAddress: this.confirmedForm.address,
-                postalCode: this.confirmedForm.postalCode,
-                city: this.confirmedForm.city,
-                province: this.confirmedForm.province
+                productsSubtotal: t.productsSubtotal,
+                warrantySubtotal: t.warrantySubtotal,
+                removalSubtotal: t.removalSubtotal,
+                installationSubtotal: t.installationSubtotal,
+                couponCode: this.appliedCoupon ? this.appliedCoupon.code : '',
+                couponDiscountAmount: t.couponDiscountAmount,
+                shippingMethod: f.shippingMethod,
+                shippingCost: t.shippingCost,
+                taxRegion: t.region,
+                baseExTax: t.baseExTax,
+                payment: f.payment,
+                isCompany: f.isCompany,
+                companyName: f.companyName,
+                companyTaxId: f.companyTaxId,
+                shippingName: f.isCompany ? f.companyName : f.fullName,
+                contactName: f.fullName,
+                shippingAddress: f.address,
+                postalCode: f.postalCode,
+                city: f.city,
+                province: f.province,
+                billingDifferent: f.billingDifferent,
+                billingAddress: f.billingDifferent ? f.billingAddress : f.address,
+                billingPostalCode: f.billingDifferent ? f.billingPostalCode : f.postalCode,
+                billingCity: f.billingDifferent ? f.billingCity : f.city,
+                billingProvince: f.billingDifferent ? f.billingProvince : f.province,
+                notes: f.notes,
+                paymentDetails: f.payment === 'bizum'
+                    ? { bizumNumber: this.paymentConfig.bizumNumber, bizumBeneficiary: this.paymentConfig.bizumBeneficiary }
+                    : { iban: this.paymentConfig.iban, bic: this.paymentConfig.bic, bankName: this.paymentConfig.bankName, beneficiary: this.paymentConfig.beneficiary }
             };
             saveOrder(newOrder);
             sendOrderEmail(newOrder, 'confirmation');

@@ -264,7 +264,7 @@ if ($type === 'confirmation') {
     try {
         $pdfContent = buildProformaInvoicePdf($order);
         $attachment = [
-            'content' => base64_encode($pdfContent),
+            'content' => $pdfContent,
             'name' => 'Factura-proforma-' . $orderNumber . '.pdf',
             'type' => 'application/pdf'
         ];

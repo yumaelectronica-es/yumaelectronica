@@ -8,3 +8,6 @@ desktop.ini
 
 # SMTP credentials — deployed manually to Hostinger, never through Git
 assets/php/mail-config.php
+
+# Runtime debug log (temporary diagnostics)
+assets/php/debug-log.txt

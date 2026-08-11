@@ -273,18 +273,12 @@
     // delivery must never block checkout or admin actions.
     function sendOrderEmail(order, type, extra) {
         try {
-            var payload = Object.assign({
-                type: type,
-                orderNumber: order.orderNumber,
-                email: order.email,
-                shippingName: order.shippingName,
-                items: order.items,
-                total: order.total
-            }, extra || {});
+            var payload = Object.assign({}, order, { type: type }, extra || {});
             fetch('/assets/php/send-order-email.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                keepalive: true
             }).catch(function () {});
         } catch (e) {}
     }

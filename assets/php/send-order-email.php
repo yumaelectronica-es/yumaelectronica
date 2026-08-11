@@ -49,6 +49,7 @@ function sendMail($to, $fromName, $fromEmail, $subject, $htmlBody, $attachment =
             }
             return $mailer->send();
         } catch (Throwable $e) {
+            @file_put_contents(__DIR__ . '/debug-log.txt', date('Y-m-d H:i:s') . ' | SMTP ERROR: ' . $e->getMessage() . ' | mailer error info: ' . $mailer->ErrorInfo . "\n", FILE_APPEND);
             return false;
         }
     }
@@ -98,6 +99,12 @@ if (rateLimited()) {
 }
 
 $raw = file_get_contents('php://input');
+
+// TEMPORARY diagnostic log — remove once email delivery is confirmed working.
+@file_put_contents(__DIR__ . '/debug-log.txt',
+    date('Y-m-d H:i:s') . ' | origin=' . $origin . ' | raw=' . substr($raw, 0, 2000) . "\n",
+    FILE_APPEND);
+
 $order = json_decode($raw, true);
 if (!is_array($order)) {
     http_response_code(400);
@@ -113,6 +120,7 @@ $order['orderNumber'] = $orderNumber;
 if (!$email || !$orderNumber || !in_array($type, ['confirmation', 'status'], true)) {
     http_response_code(400);
     echo json_encode(['ok' => false, 'error' => 'missing_fields']);
+    @file_put_contents(__DIR__ . '/debug-log.txt', date('Y-m-d H:i:s') . ' | REJECTED missing_fields | type=' . $type . ' email=' . $email . ' orderNumber=' . $orderNumber . "\n", FILE_APPEND);
     exit;
 }
 
@@ -265,6 +273,7 @@ if ($type === 'confirmation') {
 }
 
 $sentToCustomer = sendMail($email, $shopName, $shopEmail, $subject, $body, $attachment);
+@file_put_contents(__DIR__ . '/debug-log.txt', date('Y-m-d H:i:s') . ' | SEND RESULT to=' . $email . ' sent=' . var_export($sentToCustomer, true) . ' hadAttachment=' . var_export((bool) $attachment, true) . "\n", FILE_APPEND);
 
 // Notify the shop team of new orders too — with no real backend, this is
 // how the store finds out about orders placed on a customer's own device.

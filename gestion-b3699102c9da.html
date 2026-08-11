@@ -188,6 +188,54 @@
                                 </div>
                             </div>
 
+                            <div class="mt-6 rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
+                                <h2 class="text-h4 text-ink-900">Contabilidad de ventas</h2>
+                                <p class="mt-1 text-body-sm text-ink-500">Solo cuenta como venta confirmada un pedido cuyo justificante de pago ha sido aprobado.</p>
+                                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                    <div class="rounded-xl border border-savings-500 bg-savings-50 p-4">
+                                        <p class="text-caption font-semibold text-savings-700">Ventas confirmadas</p>
+                                        <p class="mt-1 font-display text-h3 font-bold text-savings-700" x-text="confirmedOrders().length"></p>
+                                        <p class="text-caption text-savings-700" x-text="fmt(confirmedTotal())"></p>
+                                    </div>
+                                    <div class="rounded-xl border border-amber-200 bg-amber-200/30 p-4">
+                                        <p class="text-caption font-semibold text-amber-900">Pendientes de confirmar</p>
+                                        <p class="mt-1 font-display text-h3 font-bold text-amber-900" x-text="pendingOrders().length"></p>
+                                        <p class="text-caption text-amber-900" x-text="fmt(pendingTotal())"></p>
+                                    </div>
+                                    <div class="rounded-xl border border-ink-100 bg-ink-50 p-4">
+                                        <p class="text-caption font-semibold text-ink-500">Todos los pedidos</p>
+                                        <p class="mt-1 font-display text-h3 font-bold text-ink-900" x-text="orders.length"></p>
+                                        <p class="text-caption text-ink-500" x-text="fmt(orders.reduce((s,o) => s + (o.total||0), 0))"></p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-5 overflow-hidden overflow-x-auto rounded-xl border border-ink-100">
+                                    <table class="w-full text-left text-body-sm">
+                                        <thead class="border-b border-ink-100 bg-ink-50/60 text-caption text-ink-500">
+                                            <tr>
+                                                <th class="px-4 py-3 font-semibold">Pedido</th>
+                                                <th class="px-4 py-3 font-semibold">Fecha</th>
+                                                <th class="px-4 py-3 font-semibold">Cliente</th>
+                                                <th class="px-4 py-3 text-right font-semibold">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template x-for="order in confirmedOrders()" :key="order.orderNumber">
+                                                <tr class="border-b border-ink-100 last:border-0">
+                                                    <td class="px-4 py-3 font-semibold text-ink-900" x-text="order.orderNumber"></td>
+                                                    <td class="px-4 py-3 text-ink-500" x-text="formatDate(order.date)"></td>
+                                                    <td class="px-4 py-3 text-ink-700" x-text="order.email"></td>
+                                                    <td class="px-4 py-3 text-right tabular-nums font-semibold text-savings-700" x-text="fmt(order.total)"></td>
+                                                </tr>
+                                            </template>
+                                            <template x-if="confirmedOrders().length === 0">
+                                                <tr><td colspan="4" class="px-4 py-8 text-center text-ink-400">Todavía no hay ventas confirmadas.</td></tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
                             <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
                                 <div class="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
                                     <div class="flex items-center justify-between">
@@ -873,6 +921,18 @@
                         return this.orders.filter(function (o) {
                             return (o.orderNumber || '').toLowerCase().indexOf(q) > -1 || (o.email || '').toLowerCase().indexOf(q) > -1;
                         });
+                    },
+                    confirmedOrders() {
+                        return this.orders.filter(function (o) { return o.paymentProofStatus === 'approved'; });
+                    },
+                    pendingOrders() {
+                        return this.orders.filter(function (o) { return o.paymentProofStatus !== 'approved'; });
+                    },
+                    confirmedTotal() {
+                        return this.confirmedOrders().reduce(function (s, o) { return s + (o.total || 0); }, 0);
+                    },
+                    pendingTotal() {
+                        return this.pendingOrders().reduce(function (s, o) { return s + (o.total || 0); }, 0);
                     },
                     select(order) {
                         this.selectedOrder = order;

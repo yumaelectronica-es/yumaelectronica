@@ -5,3 +5,6 @@ desktop.ini
 
 # Editor
 .vscode/
+
+# SMTP credentials — deployed manually to Hostinger, never through Git
+assets/php/mail-config.php

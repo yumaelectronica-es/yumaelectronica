@@ -10,6 +10,50 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
+require __DIR__ . '/phpmailer/Exception.php';
+require __DIR__ . '/phpmailer/PHPMailer.php';
+require __DIR__ . '/phpmailer/SMTP.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
+
+/**
+ * Sends via authenticated SMTP (assets/php/mail-config.php, uploaded
+ * manually to the server — never committed to Git) when available, since
+ * that is delivered far more reliably to Gmail/Outlook/Yahoo than PHP's
+ * raw mail(). Falls back to mail() if the config file isn't there yet.
+ */
+function sendMail($to, $fromName, $fromEmail, $subject, $htmlBody) {
+    $configFile = __DIR__ . '/mail-config.php';
+    if (is_file($configFile)) {
+        $cfg = require $configFile;
+        $mailer = new PHPMailer(true);
+        try {
+            $mailer->isSMTP();
+            $mailer->Host = $cfg['host'];
+            $mailer->Port = $cfg['port'];
+            $mailer->SMTPSecure = $cfg['encryption'];
+            $mailer->SMTPAuth = true;
+            $mailer->Username = $cfg['username'];
+            $mailer->Password = $cfg['password'];
+            $mailer->CharSet = 'UTF-8';
+            $mailer->setFrom($cfg['username'], $fromName);
+            $mailer->addReplyTo($fromEmail);
+            $mailer->addAddress($to);
+            $mailer->isHTML(true);
+            $mailer->Subject = $subject;
+            $mailer->Body = $htmlBody;
+            return $mailer->send();
+        } catch (PHPMailerException $e) {
+            return false;
+        }
+    }
+    $headers = "MIME-Version: 1.0\r\n"
+        . "Content-Type: text/html; charset=UTF-8\r\n"
+        . "From: {$fromName} <{$fromEmail}>\r\n"
+        . "Reply-To: {$fromEmail}\r\n";
+    return @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $htmlBody, $headers);
+}
+
 // Only accept requests coming from our own site.
 $allowedHost = 'yumaelectronica.es';
 $origin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';
@@ -112,12 +156,7 @@ $body = '<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;marg
     . '</div>'
     . '</div>';
 
-$headers = "MIME-Version: 1.0\r\n"
-    . "Content-Type: text/html; charset=UTF-8\r\n"
-    . "From: {$shopName} <{$shopEmail}>\r\n"
-    . "Reply-To: {$shopEmail}\r\n";
-
-$sentToCustomer = @mail($email, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, $headers);
+$sentToCustomer = sendMail($email, $shopName, $shopEmail, $subject, $body);
 
 // Notify the shop team of new orders too — with no real backend, this is
 // how the store finds out about orders placed on a customer's own device.
@@ -128,7 +167,7 @@ if ($type === 'confirmation') {
         . '<p><strong>Pedido:</strong> ' . h($orderNumber) . '</p>'
         . ($itemsRows ? '<table style="width:100%;border-collapse:collapse;">' . $itemsRows . '</table>' : '')
         . '<p><strong>Total:</strong> ' . $total . '</p>';
-    @mail($shopEmail, '=?UTF-8?B?' . base64_encode($adminSubject) . '?=', $adminBody, $headers);
+    sendMail($shopEmail, $shopName, $shopEmail, $adminSubject, $adminBody);
 }
 
 echo json_encode(['ok' => (bool) $sentToCustomer]);

@@ -189,6 +189,78 @@ try {
         exit;
     }
 
+    if ($action === 'list-by-email') {
+        $email = strtolower(trim($in['email'] ?? ''));
+        if (!$email) {
+            echo json_encode(['ok' => true, 'orders' => []]);
+            exit;
+        }
+        $stmt = $pdo->prepare("SELECT * FROM orders WHERE LOWER(email) = ? ORDER BY created_at DESC LIMIT 100");
+        $stmt->execute([$email]);
+        $orders = array_map('rowToOrder', $stmt->fetchAll());
+        echo json_encode(['ok' => true, 'orders' => $orders]);
+        exit;
+    }
+
+    if ($action === 'update-details') {
+        $orderNumber = preg_replace('/[^A-Z0-9\-]/', '', strtoupper($in['orderNumber'] ?? ''));
+        $email = strtolower(trim($in['email'] ?? ''));
+        if (!$orderNumber || !$email) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'missing_fields']);
+            exit;
+        }
+        // Only the order's own email (the customer) can edit it.
+        $check = $pdo->prepare("SELECT id FROM orders WHERE order_number = ? AND LOWER(email) = ? LIMIT 1");
+        $check->execute([$orderNumber, $email]);
+        if (!$check->fetch()) {
+            http_response_code(403);
+            echo json_encode(['ok' => false, 'error' => 'forbidden']);
+            exit;
+        }
+
+        $patch = is_array($in['patch'] ?? null) ? $in['patch'] : [];
+        $map = [
+            'phone' => 'phone',
+            'email' => 'email',
+            'contactName' => 'contact_name',
+            'shippingName' => 'shipping_name',
+            'shippingAddress' => 'shipping_address',
+            'postalCode' => 'postal_code',
+            'city' => 'city',
+            'province' => 'province',
+            'billingDifferent' => 'billing_different',
+            'billingAddress' => 'billing_address',
+            'billingPostalCode' => 'billing_postal_code',
+            'billingCity' => 'billing_city',
+            'billingProvince' => 'billing_province',
+        ];
+        $sets = [];
+        $params = [':order_number' => $orderNumber];
+        foreach ($map as $jsKey => $col) {
+            if (!array_key_exists($jsKey, $patch)) continue;
+            $val = $patch[$jsKey];
+            if ($jsKey === 'email') {
+                $val = filter_var(trim((string) $val), FILTER_VALIDATE_EMAIL);
+                if (!$val) continue;
+            }
+            if ($jsKey === 'billingDifferent') {
+                $val = !empty($val) ? 1 : 0;
+            }
+            $sets[] = "$col = :$col";
+            $params[":$col"] = $val;
+        }
+        if (!$sets) {
+            echo json_encode(['ok' => true]);
+            exit;
+        }
+        $sql = "UPDATE orders SET " . implode(', ', $sets) . " WHERE order_number = :order_number";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
     if ($action === 'save-proof') {
         $orderNumber = preg_replace('/[^A-Z0-9\-]/', '', strtoupper($in['orderNumber'] ?? ''));
         $email = strtolower(trim($in['email'] ?? ''));

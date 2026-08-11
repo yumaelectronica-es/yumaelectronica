@@ -312,6 +312,22 @@
     function apiSaveProof(orderNumber, email, paymentProofName) {
         return apiCall('save-proof', { orderNumber: orderNumber, email: email, paymentProofName: paymentProofName }).catch(function () { return { ok: false }; });
     }
+    function apiListOrdersByEmail(email) {
+        return apiCall('list-by-email', { email: email }).catch(function () { return { ok: false, orders: [] }; });
+    }
+    function apiUpdateOrderDetails(orderNumber, email, patch) {
+        return apiCall('update-details', { orderNumber: orderNumber, email: email, patch: patch }).catch(function () { return { ok: false }; });
+    }
+    function sendAccountEmail(account) {
+        try {
+            fetch('/assets/php/send-account-email.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: account.email, fullName: account.fullName }),
+                keepalive: true
+            }).catch(function () {});
+        } catch (e) {}
+    }
 
     // Admin: disabled products — client-side only. There's no CMS behind this
     // static catalog, so "disabling" a product doesn't remove its page; it
@@ -675,6 +691,9 @@
     window.apiListOrders = apiListOrders;
     window.apiUpdateOrderStatus = apiUpdateOrderStatus;
     window.apiSaveProof = apiSaveProof;
+    window.apiListOrdersByEmail = apiListOrdersByEmail;
+    window.apiUpdateOrderDetails = apiUpdateOrderDetails;
+    window.sendAccountEmail = sendAccountEmail;
     window.ORDER_STEPS = ORDER_STEPS;
     window.getWishlist = getWishlist;
     window.isInWishlist = isInWishlist;

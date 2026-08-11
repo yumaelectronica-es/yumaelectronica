@@ -3000,49 +3000,68 @@
 
         <template x-if="!account">
             <div class="mx-auto mt-8 max-w-md">
-                <div class="rounded-2xl border border-ink-100 bg-white p-6 shadow-card">
-                    <div class="inline-flex rounded-full border border-ink-200 bg-ink-50/60 p-1 text-caption font-semibold">
-                        <button type="button" @click="authMode = 'login'" class="rounded-full px-4 py-1.5 transition" :class="authMode === 'login' ? 'bg-white text-ink-900 shadow-card' : 'text-ink-500'">Iniciar sesión</button>
-                        <button type="button" @click="authMode = 'register'" class="rounded-full px-4 py-1.5 transition" :class="authMode === 'register' ? 'bg-white text-ink-900 shadow-card' : 'text-ink-500'">Crear cuenta</button>
+                <div class="overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-card">
+                    <div class="bg-gradient-to-br from-brand-500 to-brand-600 px-6 pb-8 pt-7 text-center">
+                        <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 shrink-0"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.6-3.6 4.8-6 8-6s6.4 2.4 8 6"/></svg>
+                        </span>
+                        <h1 class="mt-3 text-h4 font-bold text-white" x-text="authMode === 'login' ? 'Bienvenido de nuevo' : 'Crea tu cuenta gratis'"></h1>
+                        <p class="mt-1.5 text-caption text-white/85" x-text="authMode === 'login' ? 'Inicia sesión para ver tus pedidos y tus datos.' : 'Compra más rápido y sigue todos tus pedidos.'"></p>
                     </div>
 
-                    <template x-if="authMode === 'login'">
-                        <div class="mt-5">
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="auth-login-email" class="mb-1.5 block text-caption font-medium text-ink-600">Correo electrónico</label>
-                                    <input id="auth-login-email" type="email" x-model="authForm.email" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
-                                </div>
-                                <div>
-                                    <label for="auth-login-pass" class="mb-1.5 block text-caption font-medium text-ink-600">Contraseña</label>
-                                    <input id="auth-login-pass" type="password" x-model="authForm.password" @keydown.enter.prevent="login()" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
-                                </div>
-                            </div>
-                            <p class="mt-2 text-[11px] text-danger-600" x-show="authError" x-cloak x-text="authError"></p>
-                            <button type="button" @click="login()" class="mt-4 inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand-500 px-6 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600">Iniciar sesión</button>
+                    <div class="p-6">
+                        <div class="grid grid-cols-2 gap-1.5 rounded-xl border border-ink-200 bg-ink-50/60 p-1 text-caption font-semibold">
+                            <button type="button" @click="authMode = 'login'; authError = ''" class="rounded-lg py-2 transition" :class="authMode === 'login' ? 'bg-white text-ink-900 shadow-card' : 'text-ink-500 hover:text-ink-700'">Iniciar sesión</button>
+                            <button type="button" @click="authMode = 'register'; authError = ''" class="rounded-lg py-2 transition" :class="authMode === 'register' ? 'bg-white text-ink-900 shadow-card' : 'text-ink-500 hover:text-ink-700'">Crear cuenta</button>
                         </div>
-                    </template>
 
-                    <template x-if="authMode === 'register'">
-                        <div class="mt-5">
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="auth-reg-name" class="mb-1.5 block text-caption font-medium text-ink-600">Nombre completo</label>
-                                    <input id="auth-reg-name" type="text" x-model="authForm.fullName" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                        <template x-if="authMode === 'login'">
+                            <div class="mt-5">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="auth-login-email" class="mb-1.5 block text-caption font-medium text-ink-600">Correo electrónico</label>
+                                        <input id="auth-login-email" type="email" autocomplete="username" x-model="authForm.email" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                    </div>
+                                    <div>
+                                        <label for="auth-login-pass" class="mb-1.5 block text-caption font-medium text-ink-600">Contraseña</label>
+                                        <input id="auth-login-pass" type="password" autocomplete="current-password" x-model="authForm.password" @keydown.enter.prevent="login()" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                    </div>
                                 </div>
-                                <div>
-                                    <label for="auth-reg-email" class="mb-1.5 block text-caption font-medium text-ink-600">Correo electrónico</label>
-                                    <input id="auth-reg-email" type="email" x-model="authForm.email" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
-                                </div>
-                                <div>
-                                    <label for="auth-reg-pass" class="mb-1.5 block text-caption font-medium text-ink-600">Contraseña</label>
-                                    <input id="auth-reg-pass" type="password" x-model="authForm.password" @keydown.enter.prevent="register()" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
-                                </div>
+                                <p class="mt-2 text-[11px] text-danger-600" x-show="authError" x-cloak x-text="authError"></p>
+                                <button type="button" @click="login()" class="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                                    Iniciar sesión
+                                </button>
+                                <p class="mt-4 text-center text-caption text-ink-500">¿No tienes cuenta? <button type="button" @click="authMode = 'register'; authError = ''" class="font-semibold text-brand-600 hover:text-brand-700">Créala en 30 segundos</button></p>
                             </div>
-                            <p class="mt-2 text-[11px] text-danger-600" x-show="authError" x-cloak x-text="authError"></p>
-                            <button type="button" @click="register()" class="mt-4 inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand-500 px-6 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600">Crear cuenta</button>
-                        </div>
-                    </template>
+                        </template>
+
+                        <template x-if="authMode === 'register'">
+                            <div class="mt-5">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="auth-reg-name" class="mb-1.5 block text-caption font-medium text-ink-600">Nombre completo</label>
+                                        <input id="auth-reg-name" type="text" autocomplete="name" x-model="authForm.fullName" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                    </div>
+                                    <div>
+                                        <label for="auth-reg-email" class="mb-1.5 block text-caption font-medium text-ink-600">Correo electrónico</label>
+                                        <input id="auth-reg-email" type="email" autocomplete="username" x-model="authForm.email" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                    </div>
+                                    <div>
+                                        <label for="auth-reg-pass" class="mb-1.5 block text-caption font-medium text-ink-600">Contraseña</label>
+                                        <input id="auth-reg-pass" type="password" autocomplete="new-password" x-model="authForm.password" @keydown.enter.prevent="register()" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                        <p class="mt-1.5 text-[11px] text-ink-400">Mínimo 4 caracteres.</p>
+                                    </div>
+                                </div>
+                                <p class="mt-2 text-[11px] text-danger-600" x-show="authError" x-cloak x-text="authError"></p>
+                                <button type="button" @click="register()" class="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+                                    Crear cuenta
+                                </button>
+                                <p class="mt-4 text-center text-caption text-ink-500">¿Ya tienes cuenta? <button type="button" @click="authMode = 'login'; authError = ''" class="font-semibold text-brand-600 hover:text-brand-700">Inicia sesión</button></p>
+                            </div>
+                        </template>
+                    </div>
                 </div>
             </div>
         </template>
@@ -3053,19 +3072,31 @@
                     <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-500 text-h4 font-bold text-white" x-text="(account.fullName || account.email).charAt(0).toUpperCase()"></span>
                     <p class="mt-3 truncate text-body font-semibold text-ink-900" x-text="account.fullName || 'Mi cuenta'"></p>
                     <p class="truncate text-caption text-ink-500" x-text="account.email"></p>
+                    <p class="mt-1 text-[11px] text-ink-400" x-show="account.createdAt" x-cloak x-text="'Cliente desde ' + formatDate(account.createdAt)"></p>
+                    <div class="mt-4 grid grid-cols-1 gap-2 border-t border-ink-100 pt-4 text-left">
+                        <a href="#pedidos" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-body-sm font-medium text-ink-600 transition hover:bg-ink-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0 text-ink-400"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8Z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                            Mis pedidos
+                            <span class="ml-auto rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-bold text-ink-600" x-text="orders.length"></span>
+                        </a>
+                        <a href="/lista-deseos.html" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-body-sm font-medium text-ink-600 transition hover:bg-ink-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0 text-ink-400"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+                            Lista de deseos
+                        </a>
+                    </div>
                     <button type="button" @click="logout()" class="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg border border-ink-200 text-body-sm font-semibold text-ink-600 transition hover:text-danger-600">Cerrar sesión</button>
                 </aside>
 
                 <div class="min-w-0 space-y-6">
                     <div class="rounded-2xl border border-ink-100 bg-white p-6 shadow-card">
-                        <h2 class="text-h4 text-ink-900">Datos de la cuenta</h2>
+                        <h2 class="text-h4 text-ink-900">Mi perfil</h2>
                         <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label for="profile-name" class="mb-1.5 block text-caption font-medium text-ink-600">Nombre completo</label>
                                 <input id="profile-name" type="text" x-model="profileForm.fullName" class="h-11 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
                             </div>
                             <div>
-                                <label for="profile-email" class="mb-1.5 block text-caption font-medium text-ink-600">Correo electrónico</label>
+                                <label for="profile-email" class="mb-1.5 block text-caption font-medium text-ink-600">Correo electrónico de acceso</label>
                                 <input id="profile-email" type="email" disabled :value="account.email" class="h-11 w-full rounded-lg border-ink-200 bg-ink-50 text-body-sm text-ink-500">
                             </div>
                             <div>
@@ -3079,10 +3110,13 @@
                         </div>
                     </div>
 
-                    <div class="rounded-2xl border border-ink-100 bg-white p-6 shadow-card">
-                        <h2 class="text-h4 text-ink-900">Mis pedidos</h2>
+                    <div id="pedidos" class="rounded-2xl border border-ink-100 bg-white p-6 shadow-card">
+                        <div class="flex items-center justify-between gap-2">
+                            <h2 class="text-h4 text-ink-900">Mis pedidos</h2>
+                            <svg x-show="ordersLoading" x-cloak class="h-4 w-4 shrink-0 animate-spin text-ink-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg>
+                        </div>
 
-                        <template x-if="orders.length === 0">
+                        <template x-if="!ordersLoading && orders.length === 0">
                             <div class="mt-4 flex flex-col items-center gap-3 rounded-xl border border-dashed border-ink-200 py-12 text-center">
                                 <span class="flex h-12 w-12 items-center justify-center rounded-full bg-ink-100 text-ink-400">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 shrink-0"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8Z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -3114,10 +3148,89 @@
                                         <span class="text-caption text-ink-500" x-text="order.payment === 'bizum' ? 'Pago por Bizum' : 'Pago por transferencia'"></span>
                                         <span class="font-display font-bold text-ink-900 tabular-nums" x-text="fmt(order.total)"></span>
                                     </div>
-                                    <a :href="'/estado-pedido.html?pedido=' + order.orderNumber + '&email=' + encodeURIComponent(order.email)" class="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-ink-200 py-2 text-caption font-semibold text-brand-600 transition hover:border-brand-300 hover:bg-brand-50">
-                                        Ver seguimiento
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                                    </a>
+                                    <div class="mt-3 grid grid-cols-2 gap-2">
+                                        <a :href="'/estado-pedido.html?pedido=' + order.orderNumber + '&email=' + encodeURIComponent(order.email)" class="flex items-center justify-center gap-1.5 rounded-lg border border-ink-200 py-2 text-caption font-semibold text-brand-600 transition hover:border-brand-300 hover:bg-brand-50">
+                                            Ver seguimiento
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                        </a>
+                                        <button type="button" @click="editingOrderNumber === order.orderNumber ? cancelEditOrder() : startEditOrder(order)" class="flex items-center justify-center gap-1.5 rounded-lg border border-ink-200 py-2 text-caption font-semibold text-ink-600 transition hover:border-brand-300 hover:text-brand-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                            <span x-text="editingOrderNumber === order.orderNumber ? 'Cerrar' : 'Editar datos'"></span>
+                                        </button>
+                                    </div>
+
+                                    <template x-if="editingOrderNumber === order.orderNumber">
+                                        <div class="mt-4 space-y-4 rounded-xl border border-ink-100 bg-ink-50/50 p-4" @click.outside="null">
+                                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Datos de contacto</p>
+                                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                                <div>
+                                                    <label class="mb-1.5 block text-caption font-medium text-ink-600">Nombre y apellidos</label>
+                                                    <input type="text" x-model="editForm.fullName" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                </div>
+                                                <div>
+                                                    <label class="mb-1.5 block text-caption font-medium text-ink-600">Teléfono</label>
+                                                    <input type="tel" x-model="editForm.phone" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                </div>
+                                                <div class="sm:col-span-2">
+                                                    <label class="mb-1.5 block text-caption font-medium text-ink-600">Correo electrónico del pedido</label>
+                                                    <input type="email" x-model="editForm.email" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                </div>
+                                            </div>
+
+                                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Dirección de envío</p>
+                                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                                <div class="sm:col-span-2">
+                                                    <label class="mb-1.5 block text-caption font-medium text-ink-600">Dirección</label>
+                                                    <input type="text" x-model="editForm.shippingAddress" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                </div>
+                                                <div>
+                                                    <label class="mb-1.5 block text-caption font-medium text-ink-600">Código postal</label>
+                                                    <input type="text" x-model="editForm.postalCode" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                </div>
+                                                <div>
+                                                    <label class="mb-1.5 block text-caption font-medium text-ink-600">Ciudad</label>
+                                                    <input type="text" x-model="editForm.city" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                </div>
+                                                <div class="sm:col-span-2">
+                                                    <label class="mb-1.5 block text-caption font-medium text-ink-600">Provincia</label>
+                                                    <input type="text" x-model="editForm.province" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                </div>
+                                            </div>
+
+                                            <label class="flex items-center gap-2 text-caption font-medium text-ink-600">
+                                                <input type="checkbox" x-model="editForm.billingDifferent" class="h-4 w-4 rounded border-ink-300 text-brand-500 focus:ring-brand-500">
+                                                Usar una dirección de facturación distinta
+                                            </label>
+
+                                            <template x-if="editForm.billingDifferent">
+                                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                                    <div class="sm:col-span-2">
+                                                        <label class="mb-1.5 block text-caption font-medium text-ink-600">Dirección de facturación</label>
+                                                        <input type="text" x-model="editForm.billingAddress" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                    </div>
+                                                    <div>
+                                                        <label class="mb-1.5 block text-caption font-medium text-ink-600">Código postal</label>
+                                                        <input type="text" x-model="editForm.billingPostalCode" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                    </div>
+                                                    <div>
+                                                        <label class="mb-1.5 block text-caption font-medium text-ink-600">Ciudad</label>
+                                                        <input type="text" x-model="editForm.billingCity" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                    </div>
+                                                    <div class="sm:col-span-2">
+                                                        <label class="mb-1.5 block text-caption font-medium text-ink-600">Provincia</label>
+                                                        <input type="text" x-model="editForm.billingProvince" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                    </div>
+                                                </div>
+                                            </template>
+
+                                            <p class="text-[11px] text-ink-400">Estos cambios solo afectan a este pedido y no se aplican a pedidos futuros ni cambian tu email de acceso.</p>
+                                            <p class="text-[11px] text-danger-600" x-show="editError" x-cloak x-text="editError"></p>
+                                            <div class="flex items-center gap-3">
+                                                <button type="button" @click="saveOrderDetails(order)" class="inline-flex h-10 items-center justify-center rounded-lg bg-brand-500 px-5 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600">Guardar cambios</button>
+                                                <button type="button" @click="cancelEditOrder()" class="inline-flex h-10 items-center justify-center rounded-lg border border-ink-200 px-5 text-body-sm font-semibold text-ink-600 transition hover:text-danger-600">Cancelar</button>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
                             </template>
                         </div>
@@ -3137,6 +3250,10 @@ function miCuentaPage() {
         profileForm: { fullName: '', phone: '' },
         profileSaved: false,
         orders: [],
+        ordersLoading: false,
+        editingOrderNumber: null,
+        editForm: {},
+        editError: '',
         init() {
             var session = getSession();
             if (session) this.setAccount(session);
@@ -3146,6 +3263,26 @@ function miCuentaPage() {
             this.profileForm.fullName = acc.fullName || '';
             this.profileForm.phone = acc.phone || '';
             this.orders = getOrdersForEmail(acc.email);
+            this.loadOrdersFromApi(acc.email);
+        },
+        loadOrdersFromApi(email) {
+            var self = this;
+            this.ordersLoading = true;
+            apiListOrdersByEmail(email).then(function (res) {
+                self.ordersLoading = false;
+                if (res && res.ok && Array.isArray(res.orders)) {
+                    // DB orders are the source of truth (visible from any device);
+                    // keep any local-only orders (e.g. placed before the DB existed).
+                    var byNumber = {};
+                    res.orders.forEach(function (o) { byNumber[o.orderNumber] = o; });
+                    self.orders.forEach(function (o) {
+                        if (!byNumber[o.orderNumber]) byNumber[o.orderNumber] = o;
+                    });
+                    self.orders = Object.values(byNumber).sort(function (a, b) {
+                        return new Date(b.date || 0) - new Date(a.date || 0);
+                    });
+                }
+            }).catch(function () { self.ordersLoading = false; });
         },
         login() {
             this.authError = '';
@@ -3176,6 +3313,7 @@ function miCuentaPage() {
             setSession(acc.email);
             this.setAccount(acc);
             this.authForm = { fullName: '', email: '', password: '' };
+            sendAccountEmail(acc);
             showToast('Cuenta creada correctamente');
         },
         logout() {
@@ -3197,6 +3335,63 @@ function miCuentaPage() {
             this.profileSaved = true;
             showToast('Datos actualizados');
             setTimeout(() => { this.profileSaved = false; }, 2000);
+        },
+        startEditOrder(order) {
+            this.editError = '';
+            this.editingOrderNumber = order.orderNumber;
+            this.editForm = {
+                fullName: order.contactName || order.shippingName || '',
+                phone: order.phone || '',
+                email: order.email || '',
+                shippingAddress: order.shippingAddress || '',
+                postalCode: order.postalCode || '',
+                city: order.city || '',
+                province: order.province || '',
+                billingDifferent: !!order.billingDifferent,
+                billingAddress: order.billingAddress || '',
+                billingPostalCode: order.billingPostalCode || '',
+                billingCity: order.billingCity || '',
+                billingProvince: order.billingProvince || ''
+            };
+        },
+        cancelEditOrder() {
+            this.editingOrderNumber = null;
+            this.editError = '';
+        },
+        saveOrderDetails(order) {
+            var self = this;
+            var f = this.editForm;
+            if (!f.fullName || !f.email || !f.shippingAddress || !f.postalCode || !f.city || !f.province) {
+                this.editError = 'Completa todos los campos obligatorios de contacto y envío.';
+                return;
+            }
+            var patch = {
+                phone: f.phone,
+                email: f.email.trim(),
+                contactName: f.fullName,
+                shippingName: f.fullName,
+                shippingAddress: f.shippingAddress,
+                postalCode: f.postalCode,
+                city: f.city,
+                province: f.province,
+                billingDifferent: f.billingDifferent,
+                billingAddress: f.billingDifferent ? f.billingAddress : '',
+                billingPostalCode: f.billingDifferent ? f.billingPostalCode : '',
+                billingCity: f.billingDifferent ? f.billingCity : '',
+                billingProvince: f.billingDifferent ? f.billingProvince : ''
+            };
+            apiUpdateOrderDetails(order.orderNumber, order.email, patch).then(function (res) {
+                if (!res || !res.ok) {
+                    self.editError = 'No se pudieron guardar los cambios. Inténtalo de nuevo.';
+                    return;
+                }
+                Object.assign(order, patch);
+                self.editingOrderNumber = null;
+                showToast('Datos del pedido actualizados');
+                self.loadOrdersFromApi(self.account.email);
+            }).catch(function () {
+                self.editError = 'No se pudieron guardar los cambios. Inténtalo de nuevo.';
+            });
         },
         fmt(n) { return fmtEUR(n); },
         formatDate(iso) {

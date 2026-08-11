@@ -430,6 +430,25 @@
         return cfg;
     }
 
+    // Payment config API — real backend (MySQL) so an IBAN/Bizum update made
+    // in the admin panel is visible to every customer and in order emails,
+    // not just in the admin's own browser (which is all localStorage gave us).
+    function paymentConfigApiCall(action, extra) {
+        var payload = Object.assign({ action: action }, extra || {});
+        return fetch('/assets/php/payment-config-api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+        }).then(function (r) { return r.json(); });
+    }
+    function apiGetPaymentConfig() {
+        return paymentConfigApiCall('get').catch(function () { return { ok: false, config: null }; });
+    }
+    function apiSavePaymentConfig(config) {
+        return paymentConfigApiCall('save', { config: config, adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false }; });
+    }
+
     // Admin: notifications — a computed feed (new orders, proofs awaiting
     // review), not a push mechanism (there's no server to push from). Read
     // fresh on every admin page load. Dismissed ids are remembered so they
@@ -742,6 +761,8 @@
     window.setProductDisabled = setProductDisabled;
     window.getPaymentConfig = getPaymentConfig;
     window.savePaymentConfig = savePaymentConfig;
+    window.apiGetPaymentConfig = apiGetPaymentConfig;
+    window.apiSavePaymentConfig = apiSavePaymentConfig;
     window.getNotifications = getNotifications;
     window.dismissNotification = dismissNotification;
     window.getVisits = getVisits;

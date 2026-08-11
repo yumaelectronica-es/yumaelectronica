@@ -73,7 +73,20 @@ try {
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    echo json_encode(['ok' => true, 'message' => 'orders/coupons tables ready']);
+    $pdo->exec("CREATE TABLE IF NOT EXISTS payment_config (
+        id INT PRIMARY KEY,
+        beneficiary VARCHAR(190) NULL,
+        iban VARCHAR(50) NULL,
+        bic VARCHAR(20) NULL,
+        bank_name VARCHAR(190) NULL,
+        bizum_number VARCHAR(30) NULL,
+        bizum_beneficiary VARCHAR(190) NULL,
+        transfer_enabled TINYINT(1) NOT NULL DEFAULT 1,
+        bizum_enabled TINYINT(1) NOT NULL DEFAULT 1,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    echo json_encode(['ok' => true, 'message' => 'orders/coupons/payment_config tables ready']);
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => $e->getMessage()]);

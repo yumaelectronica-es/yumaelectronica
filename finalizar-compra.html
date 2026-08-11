@@ -3588,6 +3588,13 @@ function checkoutPage() {
             this.cart = getCart();
             this.paymentConfig = getPaymentConfig();
             if (!this.paymentConfig.transferEnabled && this.paymentConfig.bizumEnabled) this.form.payment = 'bizum';
+            var self = this;
+            apiGetPaymentConfig().then(function (res) {
+                if (res && res.ok && res.config) {
+                    self.paymentConfig = res.config;
+                    if (!self.paymentConfig.transferEnabled && self.paymentConfig.bizumEnabled) self.form.payment = 'bizum';
+                }
+            });
             var meta = getCheckoutMeta();
             this.form.postalCode = meta.postalCode || '';
             if (meta.couponCode) {

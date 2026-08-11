@@ -754,6 +754,9 @@
                     init() {
                         this.ORDER_STEPS = window.ORDER_STEPS || [];
                         this.authed = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
+                        var hashTab = (window.location.hash || '').replace('#', '');
+                        if (hashTab && this.tabs.some(function (t) { return t.id === hashTab; })) this.tab = hashTab;
+                        this.$watch('tab', (value) => { window.location.hash = value; });
                         if (this.authed) this.loadData();
                     },
                     login() {
@@ -783,6 +786,13 @@
                         this.loadProducts();
                         this.loadOrdersFromApi();
                         this.loadCoupons();
+                        this.loadPaymentConfig();
+                    },
+                    loadPaymentConfig() {
+                        var self = this;
+                        apiGetPaymentConfig().then(function (res) {
+                            if (res && res.ok && res.config) self.paymentForm = res.config;
+                        });
                     },
                     loadCoupons() {
                         var self = this;
@@ -951,10 +961,14 @@
                         });
                     },
                     savePayments() {
+                        var self = this;
                         if (!this.paymentForm.transferEnabled && !this.paymentForm.bizumEnabled) return;
                         savePaymentConfig(this.paymentForm);
-                        this.paymentsSaved = true;
-                        setTimeout(() => { this.paymentsSaved = false; }, 2000);
+                        apiSavePaymentConfig(this.paymentForm).then(function (res) {
+                            if (!res || !res.ok) { showToast('No se pudieron guardar los datos de pago'); return; }
+                            self.paymentsSaved = true;
+                            setTimeout(() => { self.paymentsSaved = false; }, 2000);
+                        });
                     },
                     clearVisitLog() {
                         clearVisits();

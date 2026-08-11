@@ -455,9 +455,26 @@
                             <p class="mt-4 text-[11px] text-danger-600" x-show="!paymentForm.transferEnabled && !paymentForm.bizumEnabled" x-cloak>Al menos un método de pago debe quedar activado.</p>
 
                             <div class="mt-5 flex items-center gap-3">
-                                <button type="button" @click="savePayments()" :disabled="!paymentForm.transferEnabled && !paymentForm.bizumEnabled" class="inline-flex h-11 items-center justify-center rounded-lg bg-brand-500 px-6 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50">Guardar cambios</button>
-                                <span class="text-caption font-medium text-savings-700" x-show="paymentsSaved" x-cloak x-transition>Guardado</span>
+                                <button type="button" @click="savePayments()" :disabled="(!paymentForm.transferEnabled && !paymentForm.bizumEnabled) || paymentsSaving" class="inline-flex h-11 items-center justify-center rounded-lg bg-brand-500 px-6 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50" x-text="paymentsSaving ? 'Guardando…' : 'Guardar cambios'"></button>
                             </div>
+
+                            <template x-if="paymentsSaved">
+                                <div class="mt-4 flex items-center gap-3 rounded-xl border border-savings-500 bg-savings-50 p-4" x-transition:enter="transition duration-3 ease-out" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition duration-2 ease-in" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-savings-500 text-white animate-ping-once">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
+                                    </span>
+                                    <div>
+                                        <p class="font-semibold text-savings-700">Datos guardados correctamente</p>
+                                        <p class="text-caption text-savings-700">Ya están disponibles en el sitio web y en los próximos emails de pedido.</p>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="paymentsError">
+                                <p class="mt-4 flex items-center gap-2 rounded-xl border border-danger-200 bg-danger-50 p-4 text-caption font-medium text-danger-600" x-transition>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+                                    No se pudieron guardar los datos de pago. Inténtalo de nuevo.
+                                </p>
+                            </template>
                         </div>
                     </template>
 
@@ -745,6 +762,8 @@
                     disabledProducts: [],
                     paymentForm: {},
                     paymentsSaved: false,
+                    paymentsSaving: false,
+                    paymentsError: false,
                     coupons: [],
                     couponForm: { code: '', type: 'percent', value: '', label: '', minSubtotal: '' },
                     couponFormError: '',
@@ -963,11 +982,22 @@
                     savePayments() {
                         var self = this;
                         if (!this.paymentForm.transferEnabled && !this.paymentForm.bizumEnabled) return;
+                        this.paymentsSaving = true;
+                        this.paymentsSaved = false;
+                        this.paymentsError = false;
                         savePaymentConfig(this.paymentForm);
                         apiSavePaymentConfig(this.paymentForm).then(function (res) {
-                            if (!res || !res.ok) { showToast('No se pudieron guardar los datos de pago'); return; }
+                            self.paymentsSaving = false;
+                            if (!res || !res.ok) {
+                                self.paymentsError = true;
+                                setTimeout(() => { self.paymentsError = false; }, 4000);
+                                return;
+                            }
+                            // Re-read from the DB (not just echo back the form) so the
+                            // confirmation reflects what's actually now live on the site.
+                            self.loadPaymentConfig();
                             self.paymentsSaved = true;
-                            setTimeout(() => { self.paymentsSaved = false; }, 2000);
+                            setTimeout(() => { self.paymentsSaved = false; }, 4000);
                         });
                     },
                     clearVisitLog() {

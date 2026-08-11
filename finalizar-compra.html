@@ -3424,7 +3424,7 @@
                 <button type="submit" class="mt-5 inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-md bg-brand-500 px-6 text-body font-semibold text-white shadow-card transition hover:bg-brand-600 hover:-translate-y-0.5">
                     Confirmar pedido
                 </button>
-                <p class="mt-3 text-center text-[11px] leading-relaxed text-ink-400">Sitio de demostración: no se realizará ningún cargo real.</p>
+                <p class="mt-3 text-center text-[11px] leading-relaxed text-ink-400">Pago por transferencia bancaria o Bizum: no se realiza ningún cargo automático. Recibirás las instrucciones de pago por email.</p>
                 <a href="/carrito.html" class="mt-4 flex items-center justify-center gap-1.5 text-body-sm font-medium text-brand-600 hover:text-brand-700">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M11 17 6 12l5-5M18 17l-5-5 5-5"/></svg>
                     Volver al carrito
@@ -3548,7 +3548,7 @@
                 </template>
             </div>
 
-            <p class="max-w-sm text-[11px] leading-relaxed text-ink-400">Sitio de demostración: tu pedido se ha registrado localmente y no se ha realizado ningún cobro real ni se envía el archivo a ningún servidor.</p>
+            <p class="max-w-sm text-[11px] leading-relaxed text-ink-400">Tu pedido ha quedado registrado. El archivo del justificante aún no se sube automáticamente: si puedes, envíanoslo también a soporte@yumaelectronica.es para agilizar la verificación de tu pago.</p>
             <div class="mt-2 flex flex-wrap items-center justify-center gap-3">
                 <a :href="'/estado-pedido.html?pedido=' + orderNumber + '&email=' + encodeURIComponent(confirmedForm.email)" class="inline-flex items-center gap-2 rounded-full border border-ink-200 px-6 py-3 font-semibold text-ink-700 transition hover:border-brand-300 hover:text-brand-600">Ver estado de mi pedido</a>
                 <a href="/index.html" class="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-brand-600">Seguir comprando</a>
@@ -3680,12 +3680,13 @@ function checkoutPage() {
         },
         submitPaymentProof() {
             if (!this.paymentProofFile) return;
-            // Demo only: no backend to receive the file, so we just record that
-            // a proof was attached (filename + timestamp) against the order.
+            // No file upload backend yet: we record that a proof was attached
+            // (filename + timestamp) against the order, locally and in the DB.
             updateOrder(this.orderNumber, {
                 paymentProofName: this.paymentProofName,
                 paymentProofAt: new Date().toISOString()
             });
+            apiSaveProof(this.orderNumber, this.form.email, this.paymentProofName);
             this.paymentProofSubmitted = true;
             showToast('Justificante enviado');
         },
@@ -3770,6 +3771,7 @@ function checkoutPage() {
                     : { iban: this.paymentConfig.iban, bic: this.paymentConfig.bic, bankName: this.paymentConfig.bankName, beneficiary: this.paymentConfig.beneficiary }
             };
             saveOrder(newOrder);
+            apiCreateOrder(newOrder);
             sendOrderEmail(newOrder, 'confirmation');
             clearCart();
             saveCheckoutMeta({ postalCode: '', couponCode: '' });

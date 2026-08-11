@@ -6,8 +6,9 @@ desktop.ini
 # Editor
 .vscode/
 
-# SMTP credentials — deployed manually to Hostinger, never through Git
+# SMTP / database credentials — deployed manually to Hostinger, never through Git
 assets/php/mail-config.php
+assets/php/db-config.php
 
 # Runtime debug log (temporary diagnostics)
 assets/php/debug-log.txt

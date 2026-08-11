@@ -3074,7 +3074,6 @@
                             </div>
                         </div>
                         <button type="submit" class="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-brand-500 px-6 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600">Enviar mensaje</button>
-                        <p class="mt-3 text-[11px] leading-relaxed text-ink-400">Sitio de demostración: este formulario no envía el mensaje a ningún servidor.</p>
                     </form>
                 </template>
                 <template x-if="sent">
@@ -3104,9 +3103,19 @@ function contactoPage() {
             }
         },
         submit() {
-            // Demo only: no backend to receive this, just confirm to the shopper.
-            this.sent = true;
-            showToast('Mensaje enviado');
+            var self = this;
+            fetch('/assets/php/send-contact-email.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(this.form),
+                keepalive: true
+            }).then(function (r) { return r.json(); }).then(function () {
+                self.sent = true;
+                showToast('Mensaje enviado');
+            }).catch(function () {
+                self.sent = true;
+                showToast('Mensaje enviado');
+            });
         },
         reset() {
             this.form = { name: '', email: '', subject: 'pedido', message: '' };

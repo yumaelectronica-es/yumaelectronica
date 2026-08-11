@@ -642,6 +642,28 @@
                         this.disabledProducts = getDisabledProducts();
                         this.paymentForm = getPaymentConfig();
                         this.loadProducts();
+                        this.loadOrdersFromApi();
+                    },
+                    loadOrdersFromApi() {
+                        var self = this;
+                        apiListOrders().then(function (res) {
+                            if (!res || !res.ok || !Array.isArray(res.orders)) return;
+                            // DB orders are the source of truth (visible from any device);
+                            // keep any local-only orders (e.g. saved before the DB existed)
+                            // that aren't in the DB response.
+                            var byNumber = {};
+                            res.orders.forEach(function (o) { byNumber[o.orderNumber] = o; });
+                            self.orders.forEach(function (o) {
+                                if (!byNumber[o.orderNumber]) byNumber[o.orderNumber] = o;
+                            });
+                            self.orders = Object.values(byNumber).sort(function (a, b) {
+                                return new Date(b.date || 0) - new Date(a.date || 0);
+                            });
+                            if (self.selectedOrder) {
+                                var updated = self.orders.find(function (o) { return o.orderNumber === self.selectedOrder.orderNumber; });
+                                if (updated) self.selectedOrder = updated;
+                            }
+                        });
                     },
                     loadProducts() {
                         var self = this;
@@ -689,6 +711,7 @@
                     },
                     setStatus(order, idx) {
                         setOrderStatus(order.orderNumber, idx);
+                        apiUpdateOrderStatus(order.orderNumber, idx);
                         sendOrderEmail(order, 'status', { statusLabel: (this.ORDER_STEPS[idx] || {}).label || '' });
                         this.loadData();
                         var updated = this.orders.find(function (o) { return o.orderNumber === order.orderNumber; });

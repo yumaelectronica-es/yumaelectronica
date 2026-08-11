@@ -3011,7 +3011,6 @@
                 </div>
                 <button type="submit" class="inline-flex h-11 items-center justify-center rounded-lg bg-brand-500 px-6 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600 sm:col-span-2">Buscar pedido</button>
             </form>
-            <p class="mt-3 text-[11px] leading-relaxed text-ink-400">Sitio de demostración: el progreso se simula a partir de la fecha del pedido, guardado solo en este navegador.</p>
         </div>
 
         <template x-if="searched && !order">
@@ -3104,9 +3103,19 @@ function estadoPedidoPage() {
             if (pedido && email) this.search();
         },
         search() {
+            var self = this;
             this.order = findOrder(this.form.orderNumber, this.form.email);
             this.status = this.order ? orderStatus(this.order) : null;
             this.searched = true;
+            // The DB lookup is authoritative (works across devices/browsers);
+            // it overrides the local-only result above once it resolves.
+            apiLookupOrder(this.form.orderNumber, this.form.email).then(function (res) {
+                if (res && res.ok && res.order) {
+                    self.order = res.order;
+                    self.status = orderStatus(self.order);
+                    self.searched = true;
+                }
+            });
         },
         fmt(n) { return fmtEUR(n); },
         formatDate(d) {

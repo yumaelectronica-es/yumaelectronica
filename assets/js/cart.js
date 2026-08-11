@@ -283,6 +283,36 @@
         } catch (e) {}
     }
 
+    // Orders API — real backend (MySQL on Hostinger) so orders placed on any
+    // device are visible from the admin panel and the order-tracking page,
+    // not just the browser that placed them. localStorage save/read stays
+    // in place too, as an offline-friendly cache for the placing browser.
+    var YE_ADMIN_KEY = 'e7Li6M02IoyUUSCB';
+    function apiCall(action, extra) {
+        var payload = Object.assign({ action: action }, extra || {});
+        return fetch('/assets/php/orders-api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+        }).then(function (r) { return r.json(); });
+    }
+    function apiCreateOrder(order) {
+        return apiCall('create', order).catch(function () { return { ok: false }; });
+    }
+    function apiLookupOrder(orderNumber, email) {
+        return apiCall('lookup', { orderNumber: orderNumber, email: email }).catch(function () { return { ok: false, order: null }; });
+    }
+    function apiListOrders() {
+        return apiCall('list', { adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false, orders: [] }; });
+    }
+    function apiUpdateOrderStatus(orderNumber, statusIndex) {
+        return apiCall('update-status', { orderNumber: orderNumber, statusIndex: statusIndex, adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false }; });
+    }
+    function apiSaveProof(orderNumber, email, paymentProofName) {
+        return apiCall('save-proof', { orderNumber: orderNumber, email: email, paymentProofName: paymentProofName }).catch(function () { return { ok: false }; });
+    }
+
     // Admin: disabled products — client-side only. There's no CMS behind this
     // static catalog, so "disabling" a product doesn't remove its page; it
     // just hides the buy button and flags it as unavailable wherever it's
@@ -640,6 +670,11 @@
     window.orderStatus = orderStatus;
     window.setOrderStatus = setOrderStatus;
     window.sendOrderEmail = sendOrderEmail;
+    window.apiCreateOrder = apiCreateOrder;
+    window.apiLookupOrder = apiLookupOrder;
+    window.apiListOrders = apiListOrders;
+    window.apiUpdateOrderStatus = apiUpdateOrderStatus;
+    window.apiSaveProof = apiSaveProof;
     window.ORDER_STEPS = ORDER_STEPS;
     window.getWishlist = getWishlist;
     window.isInWishlist = isInWishlist;

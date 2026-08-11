@@ -48,7 +48,7 @@ function sendMail($to, $fromName, $fromEmail, $subject, $htmlBody, $attachment =
                 $mailer->addStringAttachment($attachment['content'], $attachment['name'], 'base64', $attachment['type']);
             }
             return $mailer->send();
-        } catch (PHPMailerException $e) {
+        } catch (Throwable $e) {
             return false;
         }
     }
@@ -259,7 +259,7 @@ if ($type === 'confirmation') {
             'name' => 'Factura-proforma-' . $orderNumber . '.pdf',
             'type' => 'application/pdf'
         ];
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         $attachment = null; // Don't block the email if PDF generation fails.
     }
 }

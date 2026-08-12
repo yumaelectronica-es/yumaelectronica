@@ -486,9 +486,39 @@
         return items;
     }
 
-    // Session-scoped activity log — this browser's own page views and cart
-    // state only. There's no server, so this can never show real visitors;
-    // it's an honest per-browser log, useful mainly for testing.
+    // Anonymous per-browser id (no login required) used to tie visits and
+    // an in-progress cart to the same visitor across page loads, without
+    // identifying who they are.
+    var VISITOR_ID_KEY = 'yuma_visitor_id_v1';
+    function getVisitorId() {
+        try {
+            var id = localStorage.getItem(VISITOR_ID_KEY);
+            if (!id) {
+                id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2));
+                localStorage.setItem(VISITOR_ID_KEY, id);
+            }
+            return id;
+        } catch (e) { return 'anon'; }
+    }
+    function trackingApiCall(action, extra) {
+        var payload = Object.assign({ action: action }, extra || {});
+        return fetch('/assets/php/tracking-api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+        }).then(function (r) { return r.json(); }).catch(function () { return { ok: false }; });
+    }
+    function apiListVisits() {
+        return trackingApiCall('list-visits', { adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false, visits: [] }; });
+    }
+    function apiListAbandonedCarts() {
+        return trackingApiCall('list-carts', { adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false, carts: [] }; });
+    }
+
+    // Activity log — logs to this browser's own localStorage (instant,
+    // offline-friendly) and to the shared database (so the admin panel sees
+    // real visits from every visitor, not just its own browser).
     var VISITS_KEY = 'yuma_visits_v1';
     var VISITS_MAX = 150;
     function logVisit() {
@@ -500,6 +530,7 @@
             if (list.length > VISITS_MAX) list = list.slice(list.length - VISITS_MAX);
             localStorage.setItem(VISITS_KEY, JSON.stringify(list));
         } catch (e) {}
+        trackingApiCall('log-visit', { path: location.pathname, title: document.title, visitorId: getVisitorId() });
     }
     function getVisits() {
         try {
@@ -511,15 +542,15 @@
         localStorage.removeItem(VISITS_KEY);
     }
 
-    // In-progress cart snapshot for this browser — updated whenever the cart
-    // changes, cleared once an order is placed. Lets the admin see "carts
-    // that didn't check out yet" for THIS session; can't reflect other
-    // shoppers without a real backend.
+    // In-progress cart snapshot — kept locally for instant reads, and synced
+    // to the database (keyed by the anonymous visitor id) so the admin panel
+    // sees carts abandoned by any shopper, not just its own browser.
     var CART_SNAPSHOT_KEY = 'yuma_cart_snapshot_v1';
     function updateCartSnapshot() {
         var cart = getCart();
         if (!cart.length) {
             localStorage.removeItem(CART_SNAPSHOT_KEY);
+            trackingApiCall('clear-cart', { visitorId: getVisitorId() });
             return;
         }
         localStorage.setItem(CART_SNAPSHOT_KEY, JSON.stringify({
@@ -527,6 +558,8 @@
             total: cartTotal(),
             updatedAt: new Date().toISOString()
         }));
+        var session = getSession();
+        trackingApiCall('save-cart', { visitorId: getVisitorId(), items: cart, total: cartTotal(), email: session ? session.email : '' });
     }
     function getAbandonedCarts() {
         try {
@@ -768,6 +801,8 @@
     window.getVisits = getVisits;
     window.clearVisits = clearVisits;
     window.getAbandonedCarts = getAbandonedCarts;
+    window.apiListVisits = apiListVisits;
+    window.apiListAbandonedCarts = apiListAbandonedCarts;
 
     document.addEventListener('DOMContentLoaded', function () {
         updateCartBadge();

@@ -89,7 +89,25 @@ try {
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    echo json_encode(['ok' => true, 'message' => 'orders/coupons/payment_config tables ready']);
+    $pdo->exec("CREATE TABLE IF NOT EXISTS visits (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        path VARCHAR(255) NOT NULL,
+        title VARCHAR(255) NULL,
+        visitor_id VARCHAR(40) NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS abandoned_carts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        visitor_id VARCHAR(40) NOT NULL UNIQUE,
+        items_json TEXT NOT NULL,
+        total DECIMAL(10,2) NOT NULL DEFAULT 0,
+        email VARCHAR(190) NULL,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    echo json_encode(['ok' => true, 'message' => 'orders/coupons/payment_config/visits/abandoned_carts tables ready']);
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => $e->getMessage()]);

@@ -3757,6 +3757,7 @@ function checkoutPage() {
             this.confirmedTotal = t.finalTotal;
             this.confirmedForm = Object.assign({}, this.form);
             this.orderConfirmed = true;
+            this.$nextTick(function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
             var f = this.confirmedForm;
             var newOrder = {
                 orderNumber: this.orderNumber,

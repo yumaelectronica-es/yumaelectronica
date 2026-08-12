@@ -3538,18 +3538,18 @@
                             <span class="truncate" x-text="paymentProofName || 'Elegir archivo'"></span>
                             <input type="file" accept="image/*,.pdf" class="hidden" @change="onProofSelected($event)">
                         </label>
-                        <button type="button" @click="submitPaymentProof()" :disabled="!paymentProofFile" class="mt-2 inline-flex h-10 w-full items-center justify-center rounded-lg bg-brand-500 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50">Enviar justificante</button>
+                        <button type="button" @click="submitPaymentProof()" :disabled="!paymentProofFile || paymentProofUploading" class="mt-2 inline-flex h-10 w-full items-center justify-center rounded-lg bg-brand-500 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50" x-text="paymentProofUploading ? 'Enviando…' : 'Enviar justificante'"></button>
                     </div>
                 </template>
                 <template x-if="paymentProofSubmitted">
-                    <div class="flex items-center gap-2.5 text-savings-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
-                        <span class="text-body-sm font-semibold">Justificante enviado (<span x-text="paymentProofName"></span>). Revisaremos tu pago en breve.</span>
+                    <div class="flex items-start gap-2.5 text-savings-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 h-5 w-5 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
+                        <span class="min-w-0 text-body-sm font-semibold">Justificante enviado (<span class="break-all" x-text="paymentProofName"></span>). Revisaremos tu pago en breve.</span>
                     </div>
                 </template>
             </div>
 
-            <p class="max-w-sm text-[11px] leading-relaxed text-ink-400">Tu pedido ha quedado registrado. El archivo del justificante aún no se sube automáticamente: si puedes, envíanoslo también a soporte@yumaelectronica.es para agilizar la verificación de tu pago.</p>
+            <p class="max-w-sm text-[11px] leading-relaxed text-ink-400">Tu pedido ha quedado registrado. Revisaremos tu justificante de pago en cuanto lo recibamos.</p>
             <div class="mt-2 flex flex-wrap items-center justify-center gap-3">
                 <a :href="'/estado-pedido.html?pedido=' + orderNumber + '&email=' + encodeURIComponent(confirmedForm.email)" class="inline-flex items-center gap-2 rounded-full border border-ink-200 px-6 py-3 font-semibold text-ink-700 transition hover:border-brand-300 hover:text-brand-600">Ver estado de mi pedido</a>
                 <a href="/index.html" class="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-brand-600">Seguir comprando</a>
@@ -3580,6 +3580,7 @@ function checkoutPage() {
         paymentProofFile: null,
         paymentProofName: '',
         paymentProofSubmitted: false,
+        paymentProofUploading: false,
         account: null,
         authMode: 'guest',
         authForm: { fullName: '', email: '', password: '' },
@@ -3695,15 +3696,31 @@ function checkoutPage() {
         },
         submitPaymentProof() {
             if (!this.paymentProofFile) return;
-            // No file upload backend yet: we record that a proof was attached
-            // (filename + timestamp) against the order, locally and in the DB.
-            updateOrder(this.orderNumber, {
-                paymentProofName: this.paymentProofName,
-                paymentProofAt: new Date().toISOString()
-            });
-            apiSaveProof(this.orderNumber, this.form.email, this.paymentProofName);
-            this.paymentProofSubmitted = true;
-            showToast('Justificante enviado');
+            var self = this;
+            this.paymentProofUploading = true;
+            var formData = new FormData();
+            formData.append('orderNumber', this.orderNumber);
+            formData.append('email', this.form.email);
+            formData.append('proof', this.paymentProofFile);
+            fetch('/assets/php/upload-proof.php', { method: 'POST', body: formData })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    self.paymentProofUploading = false;
+                    if (!res || !res.ok) {
+                        showToast('No se pudo enviar el justificante. Inténtalo de nuevo.');
+                        return;
+                    }
+                    updateOrder(self.orderNumber, {
+                        paymentProofName: res.name,
+                        paymentProofAt: new Date().toISOString()
+                    });
+                    self.paymentProofSubmitted = true;
+                    showToast('Justificante enviado');
+                })
+                .catch(function () {
+                    self.paymentProofUploading = false;
+                    showToast('No se pudo enviar el justificante. Inténtalo de nuevo.');
+                });
         },
         productsSubtotal() { return this.totals().productsSubtotal; },
         warrantySubtotal() { return this.totals().warrantySubtotal; },

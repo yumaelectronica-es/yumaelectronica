@@ -3061,11 +3061,16 @@
                     <p class="mt-2 rounded-lg bg-savings-50 px-4 py-3 text-body-sm font-semibold text-savings-700" x-show="status.isDelivered" x-cloak>Tu pedido ha sido entregado. ¡Gracias por comprar en Yuma Electrónica!</p>
                     <div class="mt-4 rounded-xl border p-4 text-body-sm" :class="proofBoxClass()">
                         <template x-if="order.paymentProofName && order.paymentProofStatus !== 'rejected'">
-                            <p class="flex items-center gap-2 text-ink-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 text-savings-700"><path d="m5 13 4 4L19 7"/></svg>
-                                Justificante recibido: <span class="font-semibold text-ink-900" x-text="order.paymentProofName"></span>
-                                <span class="ml-auto rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold" x-text="order.paymentProofStatus === 'approved' ? 'Aprobado' : 'En revisión'"></span>
-                            </p>
+                            <div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="flex min-w-0 items-center gap-2 text-ink-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 text-savings-700"><path d="m5 13 4 4L19 7"/></svg>
+                                        <span>Justificante recibido</span>
+                                    </p>
+                                    <span class="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold" x-text="order.paymentProofStatus === 'approved' ? 'Aprobado' : 'En revisión'"></span>
+                                </div>
+                                <p class="mt-1 break-all text-caption font-semibold text-ink-900" x-text="order.paymentProofName"></p>
+                            </div>
                         </template>
                         <template x-if="!order.paymentProofName || order.paymentProofStatus === 'rejected'">
                             <div>
@@ -3077,7 +3082,7 @@
                                     <span class="truncate" x-text="proofFileName || 'Elegir archivo'"></span>
                                     <input type="file" accept="image/*,.pdf" class="hidden" @change="onProofSelected($event)">
                                 </label>
-                                <button type="button" @click="submitProof()" :disabled="!proofFile" class="mt-2 inline-flex h-10 w-full items-center justify-center rounded-lg bg-brand-500 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50" x-text="order.paymentProofStatus === 'rejected' ? 'Reenviar justificante' : 'Enviar justificante'"></button>
+                                <button type="button" @click="submitProof()" :disabled="!proofFile || proofUploading" class="mt-2 inline-flex h-10 w-full items-center justify-center rounded-lg bg-brand-500 text-body-sm font-semibold text-white shadow-card transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50" x-text="proofUploading ? 'Enviando…' : (order.paymentProofStatus === 'rejected' ? 'Reenviar justificante' : 'Enviar justificante')"></button>
                             </div>
                         </template>
                     </div>
@@ -3115,6 +3120,7 @@ function estadoPedidoPage() {
         searched: false,
         proofFile: null,
         proofFileName: '',
+        proofUploading: false,
         init() {
             var params = new URLSearchParams(window.location.search);
             var pedido = params.get('pedido');
@@ -3154,15 +3160,28 @@ function estadoPedidoPage() {
         submitProof() {
             var self = this;
             if (!this.proofFile || !this.order) return;
-            apiSaveProof(this.order.orderNumber, this.order.email, this.proofFileName).then(function (res) {
-                if (!res || !res.ok) { showToast('No se pudo enviar el justificante'); return; }
-                self.order.paymentProofName = self.proofFileName;
-                self.order.paymentProofStatus = 'pending';
-                self.order.paymentProofRejectionReason = null;
-                self.proofFile = null;
-                self.proofFileName = '';
-                showToast('Justificante enviado');
-            });
+            this.proofUploading = true;
+            var formData = new FormData();
+            formData.append('orderNumber', this.order.orderNumber);
+            formData.append('email', this.order.email);
+            formData.append('proof', this.proofFile);
+            fetch('/assets/php/upload-proof.php', { method: 'POST', body: formData })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    self.proofUploading = false;
+                    if (!res || !res.ok) { showToast('No se pudo enviar el justificante'); return; }
+                    self.order.paymentProofName = res.name;
+                    self.order.paymentProofPath = res.path;
+                    self.order.paymentProofStatus = 'pending';
+                    self.order.paymentProofRejectionReason = null;
+                    self.proofFile = null;
+                    self.proofFileName = '';
+                    showToast('Justificante enviado');
+                })
+                .catch(function () {
+                    self.proofUploading = false;
+                    showToast('No se pudo enviar el justificante');
+                });
         },
         fmt(n) { return fmtEUR(n); },
         formatDate(d) {

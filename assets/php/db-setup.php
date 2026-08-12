@@ -61,6 +61,9 @@ try {
     if (!in_array('payment_proof_rejection_reason', $existingCols, true)) {
         $pdo->exec("ALTER TABLE orders ADD COLUMN payment_proof_rejection_reason VARCHAR(255) NULL AFTER payment_proof_status");
     }
+    if (!in_array('payment_proof_path', $existingCols, true)) {
+        $pdo->exec("ALTER TABLE orders ADD COLUMN payment_proof_path VARCHAR(255) NULL AFTER payment_proof_name");
+    }
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS coupons (
         id INT AUTO_INCREMENT PRIMARY KEY,

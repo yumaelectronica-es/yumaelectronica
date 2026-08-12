@@ -84,6 +84,7 @@ function rowToOrder($row) {
         'notes' => $row['notes'],
         'statusOverride' => $row['status_override'] !== null ? (int) $row['status_override'] : null,
         'paymentProofName' => $row['payment_proof_name'],
+        'paymentProofPath' => $row['payment_proof_path'] ?? null,
         'paymentProofAt' => $row['payment_proof_at'],
         'paymentProofStatus' => $row['payment_proof_status'] ?? null,
         'paymentProofRejectionReason' => $row['payment_proof_rejection_reason'] ?? null,

@@ -333,7 +333,7 @@
                                         </div>
                                         <p class="mt-2 truncate text-body-sm text-ink-700" x-text="order.email"></p>
                                         <div class="mt-3 flex items-center justify-between gap-2 border-t border-ink-100 pt-3">
-                                            <span class="inline-flex items-center gap-1 text-caption" :class="proofStatusInfo(order).cls">
+                                            <span class="inline-flex items-center gap-1 text-caption" :class="[proofStatusInfo(order).cls, order.paymentProofStatus === 'pending' ? 'animate-proof-blink' : '']">
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
                                                 <span x-text="proofStatusInfo(order).label"></span>
                                             </span>
@@ -735,11 +735,25 @@
                         <div>
                             <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Justificante de pago</p>
                             <div class="mt-2 rounded-xl border p-3 text-body-sm" :class="proofBoxClass(selectedOrder)">
-                                <div class="flex flex-wrap items-center justify-between gap-2">
-                                    <span class="font-semibold" x-text="selectedOrder.paymentProofName ? selectedOrder.paymentProofName : 'Sin justificante todavía'"></span>
-                                    <span class="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold" x-text="proofStatusInfo(selectedOrder).label"></span>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-semibold" x-text="selectedOrder.paymentProofName ? 'Justificante recibido' : 'Sin justificante todavía'"></span>
+                                    <span class="shrink-0 inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold" :class="selectedOrder.paymentProofStatus === 'pending' ? 'animate-proof-blink' : ''" x-text="proofStatusInfo(selectedOrder).label"></span>
                                 </div>
+                                <p class="mt-1 break-all text-caption font-medium text-ink-700" x-show="selectedOrder.paymentProofName" x-text="selectedOrder.paymentProofName"></p>
                                 <p class="mt-1 text-caption" x-show="selectedOrder.paymentProofRejectionReason" x-cloak x-text="'Motivo: ' + selectedOrder.paymentProofRejectionReason"></p>
+
+                                <template x-if="selectedOrder.paymentProofPath">
+                                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                                        <a :href="proofFileUrl(selectedOrder)" target="_blank" rel="noopener" class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-ink-200 bg-white px-4 text-caption font-semibold text-ink-600 transition hover:border-brand-300 hover:text-brand-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            Ver justificante
+                                        </a>
+                                        <a :href="proofFileUrl(selectedOrder) + '&download=1'" class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-ink-200 bg-white px-4 text-caption font-semibold text-ink-600 transition hover:border-brand-300 hover:text-brand-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M12 3v12m0-12 4 4m-4-4-4 4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                                            Descargar
+                                        </a>
+                                    </div>
+                                </template>
 
                                 <template x-if="selectedOrder.paymentProofName && selectedOrder.paymentProofStatus !== 'approved'">
                                     <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -763,7 +777,7 @@
                             <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Actualizar estado</p>
                             <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                                 <template x-for="(step, idx) in ORDER_STEPS" :key="step.key">
-                                    <button type="button" @click="setStatus(selectedOrder, idx)" :disabled="!canSetStatus(selectedOrder, idx)" class="rounded-lg border px-3 py-2 text-caption font-semibold transition disabled:cursor-not-allowed disabled:opacity-40" :class="status(selectedOrder).stepIndex === idx ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-ink-200 text-ink-600 hover:border-brand-300'" x-text="step.label"></button>
+                                    <button type="button" @click="setStatus(selectedOrder, idx)" :disabled="!canSetStatus(selectedOrder, idx)" class="rounded-lg border-2 px-3 py-2 text-caption font-semibold transition disabled:cursor-not-allowed disabled:opacity-40" :class="stepColorClass(idx, status(selectedOrder).stepIndex === idx)" x-text="step.label"></button>
                                 </template>
                             </div>
                             <p class="mt-2 text-[11px] text-ink-400" x-show="status(selectedOrder).isManual" x-cloak>Estado fijado manualmente por el equipo (ya no avanza automáticamente).</p>
@@ -978,11 +992,25 @@
                         if (order.paymentProofStatus === 'rejected') return 'border-danger-200 bg-danger-50 text-danger-600';
                         return 'border-amber-200 bg-amber-200/30 text-amber-900';
                     },
+                    proofFileUrl(order) {
+                        return '/assets/php/serve-proof.php?path=' + encodeURIComponent(order.paymentProofPath || '') + '&key=' + encodeURIComponent(ADMIN_PASSWORD);
+                    },
                     canSetStatus(order, idx) {
                         var cur = this.status(order).stepIndex;
                         if (idx <= cur) return true;
                         if (idx === cur + 1 && order.paymentProofStatus === 'approved') return true;
                         return false;
+                    },
+                    stepColorClass(idx, active) {
+                        var palettes = [
+                            { border: 'border-ink-300', bg: 'bg-ink-50', text: 'text-ink-700' },
+                            { border: 'border-savings-500', bg: 'bg-savings-50', text: 'text-savings-700' },
+                            { border: 'border-amber-200', bg: 'bg-amber-200', text: 'text-amber-900' },
+                            { border: 'border-info-500', bg: 'bg-info-50', text: 'text-info-700' },
+                            { border: 'border-brand-500', bg: 'bg-brand-50', text: 'text-brand-700' }
+                        ];
+                        var p = palettes[idx] || palettes[0];
+                        return active ? (p.border + ' ' + p.bg + ' ' + p.text) : (p.border + ' text-ink-500');
                     },
                     approveProof(order) {
                         apiApproveProof(order.orderNumber).then(function (res) {

@@ -333,10 +333,18 @@
                                         </div>
                                         <p class="mt-2 truncate text-body-sm text-ink-700" x-text="order.email"></p>
                                         <div class="mt-3 flex items-center justify-between gap-2 border-t border-ink-100 pt-3">
-                                            <span class="inline-flex items-center gap-1 text-caption" :class="[proofStatusInfo(order).cls, order.paymentProofStatus === 'pending' ? 'animate-proof-blink' : '']">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
-                                                <span x-text="proofStatusInfo(order).label"></span>
-                                            </span>
+                                            <template x-if="order.paymentProofStatus === 'pending'">
+                                                <span class="animate-proof-blink inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-200 px-3 py-1.5 text-[11px] font-bold text-amber-900 shadow-card">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+                                                    ¡Revisar justificante!
+                                                </span>
+                                            </template>
+                                            <template x-if="order.paymentProofStatus !== 'pending'">
+                                                <span class="inline-flex items-center gap-1 text-caption" :class="proofStatusInfo(order).cls">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
+                                                    <span x-text="proofStatusInfo(order).label"></span>
+                                                </span>
+                                            </template>
                                             <span class="font-display font-bold text-ink-900 tabular-nums" x-text="fmt(order.total)"></span>
                                         </div>
                                     </button>
@@ -737,7 +745,11 @@
                             <div class="mt-2 rounded-xl border p-3 text-body-sm" :class="proofBoxClass(selectedOrder)">
                                 <div class="flex items-center justify-between gap-2">
                                     <span class="font-semibold" x-text="selectedOrder.paymentProofName ? 'Justificante recibido' : 'Sin justificante todavía'"></span>
-                                    <span class="shrink-0 inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold" :class="selectedOrder.paymentProofStatus === 'pending' ? 'animate-proof-blink' : ''" x-text="proofStatusInfo(selectedOrder).label"></span>
+                                    <span class="animate-proof-blink shrink-0 inline-flex items-center gap-1.5 rounded-full bg-amber-200 px-3 py-1.5 text-[11px] font-bold text-amber-900 shadow-card" x-show="selectedOrder.paymentProofStatus === 'pending'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+                                        ¡Revisar!
+                                    </span>
+                                    <span class="shrink-0 inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold" x-show="selectedOrder.paymentProofStatus !== 'pending'" x-text="proofStatusInfo(selectedOrder).label"></span>
                                 </div>
                                 <p class="mt-1 break-all text-caption font-medium text-ink-700" x-show="selectedOrder.paymentProofName" x-text="selectedOrder.paymentProofName"></p>
                                 <p class="mt-1 text-caption" x-show="selectedOrder.paymentProofRejectionReason" x-cloak x-text="'Motivo: ' + selectedOrder.paymentProofRejectionReason"></p>

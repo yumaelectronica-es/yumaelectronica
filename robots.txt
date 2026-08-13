@@ -3,3 +3,15 @@ Disallow: /carrito.html
 Disallow: /finalizar-compra.html
 Disallow: /mi-cuenta.html
 Disallow: /estado-pedido.html
+
+User-agent: Googlebot
+Disallow: /carrito.html
+Disallow: /finalizar-compra.html
+Disallow: /mi-cuenta.html
+Disallow: /estado-pedido.html
+
+User-agent: Googlebot-Image
+Disallow: /carrito.html
+Disallow: /finalizar-compra.html
+Disallow: /mi-cuenta.html
+Disallow: /estado-pedido.html

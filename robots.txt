@@ -3,5 +3,3 @@ Disallow: /carrito.html
 Disallow: /finalizar-compra.html
 Disallow: /mi-cuenta.html
 Disallow: /estado-pedido.html
-Disallow: /assets/php/
-Allow: /assets/php/feed-google-merchant.php

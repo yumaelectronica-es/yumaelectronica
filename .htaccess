@@ -1,2 +1,13 @@
 # Custom 404 page instead of Hostinger's default
 ErrorDocument 404 /404.html
+
+# Tell the CDN not to auto-convert product images to WebP: Google Merchant
+# Center requires JPEG/PNG/GIF at the exact URL declared in the product
+# feed, and was rejecting products because the CDN silently served WebP
+# to crawlers whose Accept header allows it, even though the URL ends in
+# .png/.jpg. no-transform is the standard HTTP directive for this.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(png|jpe?g|gif)$">
+        Header set Cache-Control "public, max-age=604800, no-transform"
+    </FilesMatch>
+</IfModule>

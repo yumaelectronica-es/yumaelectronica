@@ -44,7 +44,13 @@ foreach ($products as $p) {
     if (!$id || !$path) continue;
 
     $link = $siteUrl . '/producto/' . $path . '.html';
-    $imageLink = $image ? $siteUrl . $image : '';
+    // Served through a PHP proxy (not the direct static path) because
+    // Hostinger's CDN auto-converts static image requests to WebP whenever
+    // the client's Accept header allows it — including Google's crawler —
+    // which Merchant Center rejects for image_link. PHP responses aren't
+    // subject to that image-optimization pipeline.
+    $imageRel = preg_replace('#^/assets/img/products/#', '', $image);
+    $imageLink = $image ? $siteUrl . '/assets/php/product-image.php?p=' . rawurlencode($imageRel) : '';
 
     echo '<item>' . "\n";
     echo '<g:id>' . xml_esc($id) . '</g:id>' . "\n";

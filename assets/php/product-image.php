@@ -25,21 +25,28 @@ if (!is_file($file)) {
 
 $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-// Re-encode to a standard true-color PNG (our source files are indexed/
-// palette PNGs) using GD, in case a stricter image validator has trouble
-// with palette-based PNGs. Falls back to serving the raw file if GD isn't
-// available or fails to decode it.
+// Re-encode to plain baseline JPEG (flattened onto white, since JPEG has
+// no alpha channel) using GD. Our source files are indexed/palette PNGs;
+// JPEG is the most universally-accepted format for product feed images
+// and sidesteps any validator strictness around PNG variants entirely.
+// Falls back to serving the raw file if GD is unavailable or fails.
 if (function_exists('imagecreatefromstring')) {
     $data = file_get_contents($file);
     $img = @imagecreatefromstring($data);
     if ($img !== false) {
         imagepalettetotruecolor($img);
-        imagealphablending($img, false);
-        imagesavealpha($img, true);
-        header('Content-Type: image/png');
-        header('Cache-Control: public, max-age=604800');
-        imagepng($img, null, 6);
+        $width = imagesx($img);
+        $height = imagesy($img);
+        $flat = imagecreatetruecolor($width, $height);
+        $white = imagecolorallocate($flat, 255, 255, 255);
+        imagefill($flat, 0, 0, $white);
+        imagealphablending($flat, true);
+        imagecopy($flat, $img, 0, 0, 0, 0, $width, $height);
         imagedestroy($img);
+        header('Content-Type: image/jpeg');
+        header('Cache-Control: public, max-age=604800');
+        imagejpeg($flat, null, 90);
+        imagedestroy($flat);
         exit;
     }
 }

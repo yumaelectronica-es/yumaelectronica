@@ -24,8 +24,27 @@ if (!is_file($file)) {
 }
 
 $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-$mimes = ['png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif'];
 
+// Re-encode to a standard true-color PNG (our source files are indexed/
+// palette PNGs) using GD, in case a stricter image validator has trouble
+// with palette-based PNGs. Falls back to serving the raw file if GD isn't
+// available or fails to decode it.
+if (function_exists('imagecreatefromstring')) {
+    $data = file_get_contents($file);
+    $img = @imagecreatefromstring($data);
+    if ($img !== false) {
+        imagepalettetotruecolor($img);
+        imagealphablending($img, false);
+        imagesavealpha($img, true);
+        header('Content-Type: image/png');
+        header('Cache-Control: public, max-age=604800');
+        imagepng($img, null, 6);
+        imagedestroy($img);
+        exit;
+    }
+}
+
+$mimes = ['png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif'];
 header('Content-Type: ' . ($mimes[$ext] ?? 'application/octet-stream'));
 header('Content-Length: ' . filesize($file));
 header('Cache-Control: public, max-age=604800');

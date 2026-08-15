@@ -44,7 +44,10 @@ foreach ($products as $p) {
     if (!$id || !$path) continue;
 
     $link = $siteUrl . '/producto/' . $path . '.html';
-    $imageLink = $image ? $siteUrl . $image : '';
+    // Cache-busting version param: forces Google to treat this as a URL it
+    // hasn't seen before instead of reusing a stale cached fetch/verdict
+    // ("Mostrando imagen anterior") from earlier attempts at this same URL.
+    $imageLink = $image ? $siteUrl . $image . '?v=2' : '';
 
     echo '<item>' . "\n";
     echo '<g:id>' . xml_esc($id) . '</g:id>' . "\n";

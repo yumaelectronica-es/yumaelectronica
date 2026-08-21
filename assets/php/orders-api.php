@@ -7,6 +7,8 @@
  *  - lookup        : public, requires orderNumber + email (order tracking page)
  *  - list          : admin only (adminKey), returns all orders
  *  - update-status : admin only (adminKey), sets statusOverride for one order
+ *  - mark-notification-read : admin only (adminKey), marks the "new order"
+ *                    or "proof pending" notification for one order as read
  */
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/db.php';
@@ -85,9 +87,11 @@ function rowToOrder($row) {
         'statusOverride' => $row['status_override'] !== null ? (int) $row['status_override'] : null,
         'paymentProofName' => $row['payment_proof_name'],
         'paymentProofPath' => $row['payment_proof_path'] ?? null,
-        'paymentProofAt' => $row['payment_proof_at'],
+        'paymentProofAt' => $row['payment_proof_at'] ? str_replace(' ', 'T', $row['payment_proof_at']) . 'Z' : null,
         'paymentProofStatus' => $row['payment_proof_status'] ?? null,
         'paymentProofRejectionReason' => $row['payment_proof_rejection_reason'] ?? null,
+        'notifOrderReadAt' => isset($row['notif_order_read_at']) && $row['notif_order_read_at'] ? str_replace(' ', 'T', $row['notif_order_read_at']) . 'Z' : null,
+        'notifProofReadAt' => isset($row['notif_proof_read_at']) && $row['notif_proof_read_at'] ? str_replace(' ', 'T', $row['notif_proof_read_at']) . 'Z' : null,
     ];
 }
 
@@ -258,6 +262,22 @@ try {
         }
         $stmt = $pdo->prepare("UPDATE orders SET payment_proof_status = 'rejected', payment_proof_rejection_reason = ? WHERE order_number = ?");
         $stmt->execute([$reason !== '' ? $reason : 'El justificante no es válido, súbelo de nuevo.', $orderNumber]);
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    if ($action === 'mark-notification-read') {
+        requireAdmin($in);
+        $orderNumber = preg_replace('/[^A-Z0-9\-]/', '', strtoupper($in['orderNumber'] ?? ''));
+        $type = $in['type'] ?? '';
+        if (!$orderNumber || !in_array($type, ['order', 'proof'], true)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'missing_fields']);
+            exit;
+        }
+        $col = $type === 'order' ? 'notif_order_read_at' : 'notif_proof_read_at';
+        $stmt = $pdo->prepare("UPDATE orders SET $col = NOW() WHERE order_number = ?");
+        $stmt->execute([$orderNumber]);
         echo json_encode(['ok' => true]);
         exit;
     }

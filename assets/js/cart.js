@@ -316,6 +316,9 @@
     function apiRejectProof(orderNumber, reason) {
         return apiCall('reject-proof', { orderNumber: orderNumber, reason: reason, adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false }; });
     }
+    function apiMarkNotificationRead(orderNumber, type) {
+        return apiCall('mark-notification-read', { orderNumber: orderNumber, type: type, adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false }; });
+    }
 
     // Coupons API — real backend (MySQL) so discount codes are managed from
     // the admin panel instead of hardcoded in the front-end.
@@ -447,43 +450,6 @@
     }
     function apiSavePaymentConfig(config) {
         return paymentConfigApiCall('save', { config: config, adminKey: YE_ADMIN_KEY }).catch(function () { return { ok: false }; });
-    }
-
-    // Admin: notifications — a computed feed (new orders, proofs awaiting
-    // review), not a push mechanism (there's no server to push from). Read
-    // fresh on every admin page load. Dismissed ids are remembered so they
-    // don't reappear.
-    var NOTIF_DISMISSED_KEY = 'yuma_notif_dismissed_v1';
-    function getDismissedNotifications() {
-        try {
-            var d = JSON.parse(localStorage.getItem(NOTIF_DISMISSED_KEY));
-            return Array.isArray(d) ? d : [];
-        } catch (e) { return []; }
-    }
-    function dismissNotification(id) {
-        var list = getDismissedNotifications();
-        if (list.indexOf(id) === -1) {
-            list.push(id);
-            localStorage.setItem(NOTIF_DISMISSED_KEY, JSON.stringify(list));
-        }
-    }
-    function getNotifications() {
-        var dismissed = {};
-        getDismissedNotifications().forEach(function (id) { dismissed[id] = true; });
-        var orders = getAllOrders();
-        var items = [];
-        orders.forEach(function (o) {
-            var newId = 'new-' + o.orderNumber;
-            if (!dismissed[newId] && (Date.now() - new Date(o.date).getTime()) < 48 * 36e5) {
-                items.push({ id: newId, type: 'order', date: o.date, text: 'Nuevo pedido ' + o.orderNumber + ' de ' + o.email, orderNumber: o.orderNumber });
-            }
-            var proofId = 'proof-' + o.orderNumber;
-            if (!dismissed[proofId] && o.paymentProofName && typeof o.statusOverride !== 'number') {
-                items.push({ id: proofId, type: 'proof', date: o.paymentProofAt || o.date, text: 'Justificante pendiente de revisar: ' + o.orderNumber, orderNumber: o.orderNumber });
-            }
-        });
-        items.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
-        return items;
     }
 
     // Anonymous per-browser id (no login required) used to tie visits and
@@ -771,6 +737,7 @@
     window.apiUpdateOrderDetails = apiUpdateOrderDetails;
     window.apiApproveProof = apiApproveProof;
     window.apiRejectProof = apiRejectProof;
+    window.apiMarkNotificationRead = apiMarkNotificationRead;
     window.apiValidateCoupon = apiValidateCoupon;
     window.apiListCoupons = apiListCoupons;
     window.apiCreateCoupon = apiCreateCoupon;
@@ -796,8 +763,6 @@
     window.savePaymentConfig = savePaymentConfig;
     window.apiGetPaymentConfig = apiGetPaymentConfig;
     window.apiSavePaymentConfig = apiSavePaymentConfig;
-    window.getNotifications = getNotifications;
-    window.dismissNotification = dismissNotification;
     window.getVisits = getVisits;
     window.clearVisits = clearVisits;
     window.getAbandonedCarts = getAbandonedCarts;

@@ -59,6 +59,37 @@
                             </div>
                         </div>
                         <a href="/index.html" class="text-caption font-medium text-ink-500 hover:text-ink-800">Ver tienda</a>
+                        <div class="relative">
+                            <button type="button" @click="notifOpen = !notifOpen" aria-label="Notificaciones" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-600 transition hover:bg-ink-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                                <span class="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger-500 px-1 text-[10px] font-bold text-white" x-show="notifications().length > 0" x-cloak x-text="notifications().length"></span>
+                            </button>
+                            <template x-if="notifOpen">
+                                <div @click.outside="notifOpen = false" class="absolute right-0 z-50 mt-2 w-96 max-w-full overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-modal">
+                                    <div class="flex items-center justify-between gap-2 border-b border-ink-100 p-4">
+                                        <p class="text-body-sm font-bold text-ink-900">Notificaciones</p>
+                                        <button type="button" @click="markAllNotificationsRead()" class="text-caption font-semibold text-brand-600 hover:text-brand-700" x-show="notifications().length > 0" x-cloak>Marcar todas como leídas</button>
+                                    </div>
+                                    <div class="max-h-96 divide-y divide-ink-100 overflow-y-auto">
+                                        <template x-for="n in notifications()" :key="n.id">
+                                            <div class="flex items-start gap-3 p-4 hover:bg-ink-50">
+                                                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full" :class="n.type === 'order' ? 'bg-brand-50 text-brand-600' : 'bg-amber-200 text-amber-900'">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8Z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                                </span>
+                                                <button type="button" @click="openOrderFromNotification(n)" class="min-w-0 flex-1 text-left">
+                                                    <p class="truncate text-body-sm font-medium text-ink-900 hover:text-brand-600" x-text="n.text"></p>
+                                                    <p class="text-caption text-ink-500" x-text="formatDateTime(n.date)"></p>
+                                                </button>
+                                                <button type="button" @click.stop="markNotificationRead(n)" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-400 hover:bg-ink-100 hover:text-ink-700" aria-label="Marcar como leída" title="Marcar como leída">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                        <p class="p-6 text-center text-body-sm text-ink-400" x-show="notifications().length === 0" x-cloak>No hay notificaciones pendientes.</p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                         <button type="button" @click="clearSiteCache()" :disabled="clearingCache" class="shrink-0 rounded-lg border border-ink-200 px-4 py-2 text-caption font-semibold text-ink-600 transition hover:border-brand-300 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50" x-text="clearingCache ? 'Vaciando…' : 'Vaciar caché'"></button>
                         <button type="button" @click="logout()" class="shrink-0 rounded-lg border border-ink-200 px-4 py-2 text-caption font-semibold text-ink-600 transition hover:text-danger-600">Cerrar sesión</button>
                     </div>
@@ -71,10 +102,37 @@
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0 text-brand-600" x-html="currentTab().icon"></svg>
                             <span class="truncate text-body-sm font-semibold text-ink-900" x-text="currentTab().label"></span>
                         </div>
-                        <button type="button" @click="tab = 'notifications'" aria-label="Notificaciones" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-600 transition hover:bg-ink-50">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                            <span class="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger-500 px-1 text-[10px] font-bold text-white" x-show="notifications.length > 0" x-cloak x-text="notifications.length"></span>
-                        </button>
+                        <div class="relative">
+                            <button type="button" @click="notifOpen = !notifOpen" aria-label="Notificaciones" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-600 transition hover:bg-ink-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                                <span class="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger-500 px-1 text-[10px] font-bold text-white" x-show="notifications().length > 0" x-cloak x-text="notifications().length"></span>
+                            </button>
+                            <template x-if="notifOpen">
+                                <div @click.outside="notifOpen = false" class="absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-modal">
+                                    <div class="flex items-center justify-between gap-2 border-b border-ink-100 p-4">
+                                        <p class="text-body-sm font-bold text-ink-900">Notificaciones</p>
+                                        <button type="button" @click="markAllNotificationsRead()" class="text-caption font-semibold text-brand-600 hover:text-brand-700" x-show="notifications().length > 0" x-cloak>Marcar todas como leídas</button>
+                                    </div>
+                                    <div class="max-h-96 divide-y divide-ink-100 overflow-y-auto">
+                                        <template x-for="n in notifications()" :key="n.id">
+                                            <div class="flex items-start gap-3 p-4 hover:bg-ink-50">
+                                                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full" :class="n.type === 'order' ? 'bg-brand-50 text-brand-600' : 'bg-amber-200 text-amber-900'">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8Z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                                </span>
+                                                <button type="button" @click="openOrderFromNotification(n)" class="min-w-0 flex-1 text-left">
+                                                    <p class="truncate text-body-sm font-medium text-ink-900 hover:text-brand-600" x-text="n.text"></p>
+                                                    <p class="text-caption text-ink-500" x-text="formatDateTime(n.date)"></p>
+                                                </button>
+                                                <button type="button" @click.stop="markNotificationRead(n)" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-400 hover:bg-ink-100 hover:text-ink-700" aria-label="Marcar como leída" title="Marcar como leída">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                        <p class="p-6 text-center text-body-sm text-ink-400" x-show="notifications().length === 0" x-cloak>No hay notificaciones pendientes.</p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </header>
 
@@ -99,7 +157,6 @@
                                     <button type="button" @click="tab = t.id; mobileNavOpen = false" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === t.id ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0" x-html="t.icon"></svg>
                                         <span class="flex-1" x-text="t.label"></span>
-                                        <span class="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-danger-500 px-1 text-[10px] font-bold text-white" x-show="t.id === 'notifications' && notifications.length > 0" x-cloak x-text="notifications.length"></span>
                                     </button>
                                 </template>
                             </nav>
@@ -140,11 +197,6 @@
                             <button type="button" @click="tab = 'coupons'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'coupons' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M20.6 12.6 12.6 20.6a2 2 0 0 1-2.8 0L3 13.8V3h10.8l6.8 6.8a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg>
                                 <span class="flex-1">Cupones</span>
-                            </button>
-                            <button type="button" @click="tab = 'notifications'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'notifications' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                                <span class="flex-1">Notificaciones</span>
-                                <span class="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-danger-500 px-1 text-[10px] font-bold text-white" x-show="notifications.length > 0" x-cloak x-text="notifications.length"></span>
                             </button>
                             <button type="button" @click="tab = 'payments'" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-body-sm font-semibold transition duration-2" :class="tab === 'payments' ? 'bg-brand-50 text-brand-700' : 'text-ink-600 hover:bg-ink-50'">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 shrink-0"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
@@ -189,7 +241,7 @@
                                 </div>
                                 <div class="rounded-2xl border border-ink-100 bg-white p-4 shadow-card">
                                     <p class="text-caption text-ink-500">Notificaciones</p>
-                                    <p class="mt-1 font-display text-h3 font-bold" :class="notifications.length ? 'text-danger-600' : 'text-ink-900'" x-text="notifications.length"></p>
+                                    <p class="mt-1 font-display text-h3 font-bold" :class="notifications().length ? 'text-danger-600' : 'text-ink-900'" x-text="notifications().length"></p>
                                 </div>
                             </div>
 
@@ -249,10 +301,10 @@
                                     </div>
                                     <div class="mt-3 space-y-2">
                                         <template x-for="order in orders.slice(0, 5)" :key="order.orderNumber">
-                                            <div class="flex items-center justify-between gap-3 border-t border-ink-100 pt-2 text-body-sm first:border-0 first:pt-0">
+                                            <button type="button" @click="select(order)" class="flex w-full items-center justify-between gap-3 border-t border-ink-100 pt-2 text-left text-body-sm first:border-0 first:pt-0 hover:text-brand-600">
                                                 <span class="min-w-0 truncate text-ink-700"><span class="font-semibold text-ink-900" x-text="order.orderNumber"></span> · <span x-text="order.email"></span></span>
                                                 <span class="shrink-0 tabular-nums font-semibold text-ink-900" x-text="fmt(order.total)"></span>
-                                            </div>
+                                            </button>
                                         </template>
                                         <p class="text-body-sm text-ink-400" x-show="orders.length === 0" x-cloak>Todavía no hay pedidos.</p>
                                     </div>
@@ -260,13 +312,13 @@
                                 <div class="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
                                     <div class="flex items-center justify-between">
                                         <h2 class="text-h4 text-ink-900">Notificaciones recientes</h2>
-                                        <button type="button" @click="tab = 'notifications'" class="text-caption font-semibold text-brand-600 hover:text-brand-700">Ver todas</button>
+                                        <button type="button" @click="notifOpen = true" class="text-caption font-semibold text-brand-600 hover:text-brand-700">Ver todas</button>
                                     </div>
                                     <div class="mt-3 space-y-2">
-                                        <template x-for="n in notifications.slice(0, 5)" :key="n.id">
+                                        <template x-for="n in notifications().slice(0, 5)" :key="n.id">
                                             <div class="border-t border-ink-100 pt-2 text-body-sm text-ink-700 first:border-0 first:pt-0" x-text="n.text"></div>
                                         </template>
-                                        <p class="text-body-sm text-ink-400" x-show="notifications.length === 0" x-cloak>Sin notificaciones pendientes.</p>
+                                        <p class="text-body-sm text-ink-400" x-show="notifications().length === 0" x-cloak>Sin notificaciones pendientes.</p>
                                     </div>
                                 </div>
                             </div>
@@ -332,6 +384,10 @@
                                             <span class="shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold" :class="status(order).isDelivered ? 'bg-savings-50 text-savings-700' : 'bg-amber-200 text-amber-900'" x-text="status(order).steps[status(order).stepIndex].label"></span>
                                         </div>
                                         <p class="mt-2 truncate text-body-sm text-ink-700" x-text="order.email"></p>
+                                        <p class="mt-1 inline-flex items-center gap-1 text-caption text-ink-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                                            <span x-text="order.payment === 'bizum' ? 'Bizum' : 'Transferencia bancaria'"></span>
+                                        </p>
                                         <div class="mt-3 flex items-center justify-between gap-2 border-t border-ink-100 pt-3">
                                             <template x-if="order.paymentProofStatus === 'pending'">
                                                 <span class="animate-proof-blink inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-200 px-3 py-1.5 text-[11px] font-bold text-amber-900 shadow-card">
@@ -413,35 +469,6 @@
                                     </div>
                                 </template>
                                 <p class="text-body-sm text-ink-400" x-show="coupons.length === 0" x-cloak>Todavía no has creado ningún cupón.</p>
-                            </div>
-                        </div>
-                    </template>
-
-                    <template x-if="tab === 'notifications'">
-                        <div>
-                            <h1 class="text-h3 text-ink-900">Notificaciones</h1>
-                            <p class="mt-1 text-body-sm text-ink-500">Se calculan a partir de los pedidos guardados (no hay servidor que las empuje en tiempo real): nuevos pedidos y justificantes pendientes de revisar.</p>
-                            <div class="mt-4 space-y-2">
-                                <template x-for="n in notifications" :key="n.id">
-                                    <div class="flex items-center justify-between gap-3 rounded-xl border border-ink-100 bg-white p-4 shadow-card">
-                                        <div class="flex min-w-0 items-center gap-3">
-                                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" :class="n.type === 'order' ? 'bg-brand-50 text-brand-600' : 'bg-amber-200 text-amber-900'">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8Z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                                            </span>
-                                            <div class="min-w-0">
-                                                <p class="truncate text-body-sm font-medium text-ink-900" x-text="n.text"></p>
-                                                <p class="text-caption text-ink-500" x-text="formatDate(n.date)"></p>
-                                            </div>
-                                        </div>
-                                        <div class="flex shrink-0 items-center gap-2">
-                                            <button type="button" @click="openOrderFromNotification(n.orderNumber)" class="text-caption font-semibold text-brand-600 hover:text-brand-700">Ver pedido</button>
-                                            <button type="button" @click="dismissNotif(n.id)" class="flex h-7 w-7 items-center justify-center rounded-full text-ink-400 hover:bg-ink-50 hover:text-ink-700" aria-label="Descartar">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </template>
-                                <p class="text-body-sm text-ink-400" x-show="notifications.length === 0" x-cloak>No hay notificaciones pendientes.</p>
                             </div>
                         </div>
                     </template>
@@ -633,164 +660,178 @@
                         </div>
                     </template>
 
-                    </main>
-                </div>
-            </div>
-        </template>
-
-        <template x-if="selectedOrder">
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/55 p-4" @click.self="closeDetail()">
-                <div class="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-modal">
-                    <div class="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-ink-100 bg-white p-5">
+                    <template x-if="tab === 'order-detail' && selectedOrder">
                         <div>
-                            <p class="text-caption text-ink-500">Pedido</p>
-                            <p class="text-h4 text-ink-900" x-text="selectedOrder.orderNumber"></p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="inline-flex items-center rounded-full px-3 py-1.5 text-caption font-semibold" :class="status(selectedOrder).isDelivered ? 'bg-savings-50 text-savings-700' : 'bg-amber-200 text-amber-900'" x-text="status(selectedOrder).steps[status(selectedOrder).stepIndex].label"></span>
-                            <button type="button" @click="closeDetail()" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-400 hover:bg-ink-50 hover:text-ink-700" aria-label="Cerrar">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="space-y-5 p-5">
-                        <div>
-                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Cliente</p>
-                            <div class="mt-2 grid grid-cols-1 gap-3 rounded-xl border border-ink-100 p-3 text-body-sm sm:grid-cols-2">
-                                <div><p class="text-caption text-ink-500">Email</p><p class="text-ink-900" x-text="selectedOrder.email"></p></div>
-                                <div><p class="text-caption text-ink-500">Teléfono</p><p class="text-ink-900" x-text="selectedOrder.phone || '—'"></p></div>
-                                <div><p class="text-caption text-ink-500">Fecha del pedido</p><p class="text-ink-900" x-text="formatDate(selectedOrder.date)"></p></div>
-                                <div><p class="text-caption text-ink-500">Forma de pago</p><p class="text-ink-900" x-text="selectedOrder.payment === 'bizum' ? 'Bizum' : 'Transferencia bancaria'"></p></div>
-                            </div>
-                        </div>
-
-                        <template x-if="selectedOrder.isCompany">
-                            <div>
-                                <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Empresa</p>
-                                <div class="mt-2 rounded-xl border border-ink-100 p-3 text-body-sm">
-                                    <p class="font-semibold text-ink-900" x-text="selectedOrder.companyName"></p>
-                                    <p class="text-ink-600">CIF/NIF: <span x-text="selectedOrder.companyTaxId"></span></p>
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <button type="button" @click="closeDetail()" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink-200 text-ink-500 transition hover:border-brand-300 hover:text-brand-600" aria-label="Volver a pedidos">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="m15 18-6-6 6-6"/></svg>
+                                    </button>
+                                    <div>
+                                        <p class="text-caption text-ink-500">Pedido</p>
+                                        <h1 class="text-h3 text-ink-900" x-text="selectedOrder.orderNumber"></h1>
+                                    </div>
                                 </div>
+                                <span class="inline-flex items-center rounded-full px-3 py-1.5 text-caption font-semibold" :class="status(selectedOrder).isDelivered ? 'bg-savings-50 text-savings-700' : 'bg-amber-200 text-amber-900'" x-text="status(selectedOrder).steps[status(selectedOrder).stepIndex].label"></span>
                             </div>
-                        </template>
 
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                                <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Dirección de envío</p>
-                                <div class="mt-2 rounded-xl border border-ink-100 p-3 text-body-sm">
-                                    <p class="font-semibold text-ink-900" x-text="selectedOrder.shippingName"></p>
-                                    <p class="text-ink-600" x-text="selectedOrder.shippingAddress"></p>
-                                    <p class="text-ink-600"><span x-text="selectedOrder.postalCode"></span> <span x-text="selectedOrder.city"></span>, <span x-text="selectedOrder.province"></span></p>
+                            <div class="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+                                <div class="rounded-2xl border border-ink-100 bg-white p-5 shadow-card lg:col-span-2">
+                                    <h2 class="text-h4 text-ink-900">Fecha y estado del pedido</h2>
+                                    <p class="mt-1 text-body-sm text-ink-500">Pedido realizado el <span class="font-semibold text-ink-700" x-text="formatDateTime(selectedOrder.date)"></span></p>
+                                    <div class="mt-5">
+                                        <template x-for="(step, idx) in ORDER_STEPS" :key="step.key">
+                                            <div class="flex gap-4">
+                                                <div class="flex flex-col items-center">
+                                                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-caption font-bold" :class="stepColorClass(idx, status(selectedOrder).stepIndex === idx)">
+                                                        <svg x-show="idx < status(selectedOrder).stepIndex" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="m5 13 4 4L19 7"/></svg>
+                                                        <span x-show="idx >= status(selectedOrder).stepIndex" x-text="idx + 1"></span>
+                                                    </span>
+                                                    <span class="mt-1 w-0.5 flex-1 bg-ink-100" x-show="idx < ORDER_STEPS.length - 1"></span>
+                                                </div>
+                                                <div class="min-w-0 flex-1" :class="idx < ORDER_STEPS.length - 1 ? 'pb-5' : ''">
+                                                    <button type="button" @click="setStatus(selectedOrder, idx)" :disabled="!canSetStatus(selectedOrder, idx)" class="text-left text-body-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40" :class="idx <= status(selectedOrder).stepIndex ? 'text-ink-900' : 'text-ink-400'" x-text="step.label"></button>
+                                                    <p class="text-caption text-ink-500" x-text="formatDateTime(status(selectedOrder).dates[idx])"></p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <p class="mt-2 text-[11px] text-ink-400" x-show="status(selectedOrder).isManual" x-cloak>Estado fijado manualmente por el equipo (ya no avanza automáticamente).</p>
+                                    <p class="mt-2 flex items-center gap-1.5 text-[11px] text-amber-900" x-show="selectedOrder.paymentProofStatus !== 'approved'" x-cloak>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+                                        El justificante debe estar aprobado para avanzar el estado, y cada paso debe seguir al anterior.
+                                    </p>
                                 </div>
-                            </div>
-                            <div>
-                                <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Dirección de facturación</p>
-                                <div class="mt-2 rounded-xl border border-ink-100 p-3 text-body-sm">
-                                    <template x-if="selectedOrder.billingDifferent">
+
+                                <div class="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
+                                    <h2 class="text-h4 text-ink-900">Cliente</h2>
+                                    <div class="mt-3 space-y-1.5 text-body-sm">
+                                        <div><p class="text-caption text-ink-500">Nombre completo</p><p class="font-semibold text-ink-900" x-text="selectedOrder.contactName || selectedOrder.shippingName"></p></div>
+                                        <div><p class="text-caption text-ink-500">Email</p><p class="text-ink-900" x-text="selectedOrder.email"></p></div>
+                                        <div><p class="text-caption text-ink-500">Teléfono</p><p class="text-ink-900" x-text="selectedOrder.phone || '—'"></p></div>
+                                        <template x-if="selectedOrder.isCompany">
+                                            <div class="rounded-xl border border-ink-100 bg-ink-50 p-3">
+                                                <p class="text-caption text-ink-500">Empresa</p>
+                                                <p class="font-semibold text-ink-900" x-text="selectedOrder.companyName"></p>
+                                                <p class="text-ink-600">CIF/NIF: <span x-text="selectedOrder.companyTaxId"></span></p>
+                                            </div>
+                                        </template>
+                                        <template x-if="selectedOrder.notes">
+                                            <div>
+                                                <p class="text-caption text-ink-500">Notas del cliente</p>
+                                                <p class="mt-1 rounded-xl border border-ink-100 p-3 text-ink-700" x-text="selectedOrder.notes"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
+                                    <h2 class="text-h4 text-ink-900">Método de envío</h2>
+                                    <div class="mt-3 space-y-1.5 text-body-sm">
+                                        <div><p class="text-caption text-ink-500">Método</p><p class="font-semibold text-ink-900" x-text="selectedOrder.shippingMethod === 'express' ? 'Envío exprés' : 'Envío estándar'"></p></div>
+                                        <div><p class="text-caption text-ink-500">Coste de envío</p><p class="text-ink-900" x-text="selectedOrder.shippingCost > 0 ? fmt(selectedOrder.shippingCost) : 'Gratis'"></p></div>
                                         <div>
-                                            <p class="text-ink-600" x-text="selectedOrder.billingAddress"></p>
-                                            <p class="text-ink-600"><span x-text="selectedOrder.billingPostalCode"></span> <span x-text="selectedOrder.billingCity"></span>, <span x-text="selectedOrder.billingProvince"></span></p>
+                                            <p class="text-caption text-ink-500">Dirección de envío</p>
+                                            <p class="font-semibold text-ink-900" x-text="selectedOrder.shippingName"></p>
+                                            <p class="text-ink-600" x-text="selectedOrder.shippingAddress"></p>
+                                            <p class="text-ink-600"><span x-text="selectedOrder.postalCode"></span> <span x-text="selectedOrder.city"></span>, <span x-text="selectedOrder.province"></span></p>
                                         </div>
-                                    </template>
-                                    <template x-if="!selectedOrder.billingDifferent">
-                                        <p class="text-ink-400">Igual que la dirección de envío.</p>
-                                    </template>
+                                        <div>
+                                            <p class="text-caption text-ink-500">Dirección de facturación</p>
+                                            <template x-if="selectedOrder.billingDifferent">
+                                                <div>
+                                                    <p class="text-ink-600" x-text="selectedOrder.billingAddress"></p>
+                                                    <p class="text-ink-600"><span x-text="selectedOrder.billingPostalCode"></span> <span x-text="selectedOrder.billingCity"></span>, <span x-text="selectedOrder.billingProvince"></span></p>
+                                                </div>
+                                            </template>
+                                            <template x-if="!selectedOrder.billingDifferent">
+                                                <p class="text-ink-400">Igual que la dirección de envío.</p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
+                                    <h2 class="text-h4 text-ink-900">Artículos</h2>
+                                    <div class="mt-3 space-y-1.5">
+                                        <template x-for="item in selectedOrder.items" :key="item.name + item.qty">
+                                            <div class="flex items-center justify-between gap-3 border-b border-ink-100 pb-2 text-body-sm text-ink-700 last:border-0">
+                                                <span class="min-w-0 truncate"><span x-text="item.qty"></span>&times; <span x-text="item.name"></span></span>
+                                                <span class="shrink-0 tabular-nums" x-text="fmt(item.unitPrice * item.qty)"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="mt-3 space-y-1.5 border-t border-ink-100 pt-3 text-body-sm">
+                                        <div class="flex items-center justify-between"><span class="text-ink-500">Subtotal productos</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.productsSubtotal)"></span></div>
+                                        <template x-if="selectedOrder.warrantySubtotal"><div class="flex items-center justify-between"><span class="text-ink-500">Garantía ampliada</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.warrantySubtotal)"></span></div></template>
+                                        <template x-if="selectedOrder.removalSubtotal"><div class="flex items-center justify-between"><span class="text-ink-500">Retirada de equipo</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.removalSubtotal)"></span></div></template>
+                                        <template x-if="selectedOrder.installationSubtotal"><div class="flex items-center justify-between"><span class="text-ink-500">Instalación</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.installationSubtotal)"></span></div></template>
+                                        <template x-if="selectedOrder.couponCode"><div class="flex items-center justify-between text-savings-700"><span x-text="'Cupón ' + selectedOrder.couponCode"></span><span class="tabular-nums" x-text="'−' + fmt(selectedOrder.couponDiscountAmount)"></span></div></template>
+                                        <div class="flex items-center justify-between"><span class="text-ink-500" x-text="selectedOrder.shippingCost > 0 ? 'Envío' : 'Envío (gratis)'"></span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.shippingCost)"></span></div>
+                                        <div class="flex items-center justify-between border-t border-ink-100 pt-1.5 text-body font-bold text-ink-900"><span>Total</span><span class="tabular-nums" x-text="fmt(selectedOrder.total)"></span></div>
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl border border-ink-100 bg-white p-5 shadow-card lg:col-span-2">
+                                    <h2 class="text-h4 text-ink-900">Pago y justificante</h2>
+                                    <div class="mt-3 grid grid-cols-1 gap-3 text-body-sm sm:grid-cols-2">
+                                        <div><p class="text-caption text-ink-500">Forma de pago</p><p class="font-semibold text-ink-900" x-text="selectedOrder.payment === 'bizum' ? 'Bizum' : 'Transferencia bancaria'"></p></div>
+                                        <template x-if="selectedOrder.payment === 'bizum'">
+                                            <div><p class="text-caption text-ink-500">Número Bizum usado</p><p class="text-ink-900" x-text="(selectedOrder.paymentDetails || {}).bizumNumber || '—'"></p></div>
+                                        </template>
+                                        <template x-if="selectedOrder.payment !== 'bizum'">
+                                            <div><p class="text-caption text-ink-500">IBAN usado</p><p class="text-ink-900" x-text="(selectedOrder.paymentDetails || {}).iban || '—'"></p></div>
+                                        </template>
+                                    </div>
+
+                                    <div class="mt-4 rounded-xl border p-3 text-body-sm" :class="proofBoxClass(selectedOrder)">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="font-semibold" x-text="selectedOrder.paymentProofName ? 'Justificante recibido' : 'Sin justificante todavía'"></span>
+                                            <span class="animate-proof-blink shrink-0 inline-flex items-center gap-1.5 rounded-full bg-amber-200 px-3 py-1.5 text-[11px] font-bold text-amber-900 shadow-card" x-show="selectedOrder.paymentProofStatus === 'pending'">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+                                                ¡Revisar!
+                                            </span>
+                                            <span class="shrink-0 inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold" x-show="selectedOrder.paymentProofStatus !== 'pending'" x-text="proofStatusInfo(selectedOrder).label"></span>
+                                        </div>
+                                        <p class="mt-1 break-all text-caption font-medium text-ink-700" x-show="selectedOrder.paymentProofName" x-text="selectedOrder.paymentProofName"></p>
+                                        <p class="mt-1 text-caption text-ink-500" x-show="selectedOrder.paymentProofAt" x-cloak x-text="'Enviado el ' + formatDateTime(selectedOrder.paymentProofAt)"></p>
+                                        <p class="mt-1 text-caption" x-show="selectedOrder.paymentProofRejectionReason" x-cloak x-text="'Motivo: ' + selectedOrder.paymentProofRejectionReason"></p>
+
+                                        <template x-if="selectedOrder.paymentProofPath">
+                                            <div class="mt-3 flex flex-wrap items-center gap-2">
+                                                <a :href="proofFileUrl(selectedOrder)" target="_blank" rel="noopener" class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-ink-200 bg-white px-4 text-caption font-semibold text-ink-600 transition hover:border-brand-300 hover:text-brand-600">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                    Ver justificante
+                                                </a>
+                                                <a :href="proofFileUrl(selectedOrder) + '&download=1'" class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-ink-200 bg-white px-4 text-caption font-semibold text-ink-600 transition hover:border-brand-300 hover:text-brand-600">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M12 3v12m0-12 4 4m-4-4-4 4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                                                    Descargar
+                                                </a>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="selectedOrder.paymentProofName && selectedOrder.paymentProofStatus !== 'approved'">
+                                            <div class="mt-3 flex flex-wrap items-center gap-2">
+                                                <button type="button" @click="approveProof(selectedOrder)" class="inline-flex h-9 items-center justify-center rounded-lg bg-savings-500 px-4 text-caption font-semibold text-white transition">Aprobar justificante</button>
+                                                <button type="button" @click="rejectingProof = !rejectingProof" class="inline-flex h-9 items-center justify-center rounded-lg border border-danger-200 px-4 text-caption font-semibold text-danger-600 transition hover:bg-danger-50">Rechazar justificante</button>
+                                            </div>
+                                        </template>
+                                        <template x-if="rejectingProof">
+                                            <div class="mt-3">
+                                                <input type="text" x-model="rejectReason" placeholder="Motivo del rechazo (se lo comunicaremos al cliente)" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
+                                                <div class="mt-2 flex items-center gap-2">
+                                                    <button type="button" @click="rejectProof(selectedOrder)" class="inline-flex h-9 items-center justify-center rounded-lg bg-danger-600 px-4 text-caption font-semibold text-white transition hover:bg-danger-700">Confirmar rechazo</button>
+                                                    <button type="button" @click="rejectingProof = false; rejectReason = ''" class="inline-flex h-9 items-center justify-center rounded-lg border border-ink-200 px-4 text-caption font-semibold text-ink-600 transition">Cancelar</button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    </template>
 
-                        <div>
-                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Artículos</p>
-                            <div class="mt-2 space-y-1.5 rounded-xl border border-ink-100 p-3">
-                                <template x-for="item in selectedOrder.items" :key="item.name + item.qty">
-                                    <div class="flex items-center justify-between gap-3 text-body-sm text-ink-700">
-                                        <span class="min-w-0 truncate"><span x-text="item.qty"></span>&times; <span x-text="item.name"></span></span>
-                                        <span class="shrink-0 tabular-nums" x-text="fmt(item.unitPrice * item.qty)"></span>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-
-                        <div>
-                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Totales</p>
-                            <div class="mt-2 space-y-1.5 rounded-xl border border-ink-100 p-3 text-body-sm">
-                                <div class="flex items-center justify-between"><span class="text-ink-500">Subtotal productos</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.productsSubtotal)"></span></div>
-                                <template x-if="selectedOrder.warrantySubtotal"><div class="flex items-center justify-between"><span class="text-ink-500">Garantía ampliada</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.warrantySubtotal)"></span></div></template>
-                                <template x-if="selectedOrder.removalSubtotal"><div class="flex items-center justify-between"><span class="text-ink-500">Retirada de equipo</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.removalSubtotal)"></span></div></template>
-                                <template x-if="selectedOrder.installationSubtotal"><div class="flex items-center justify-between"><span class="text-ink-500">Instalación</span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.installationSubtotal)"></span></div></template>
-                                <template x-if="selectedOrder.couponCode"><div class="flex items-center justify-between text-savings-700"><span x-text="'Cupón ' + selectedOrder.couponCode"></span><span class="tabular-nums" x-text="'−' + fmt(selectedOrder.couponDiscountAmount)"></span></div></template>
-                                <div class="flex items-center justify-between"><span class="text-ink-500" x-text="selectedOrder.shippingCost > 0 ? 'Envío' : 'Envío (gratis)'"></span><span class="tabular-nums text-ink-900" x-text="fmt(selectedOrder.shippingCost)"></span></div>
-                                <div class="flex items-center justify-between border-t border-ink-100 pt-1.5 text-body font-bold text-ink-900"><span>Total</span><span class="tabular-nums" x-text="fmt(selectedOrder.total)"></span></div>
-                            </div>
-                        </div>
-
-                        <template x-if="selectedOrder.notes">
-                            <div>
-                                <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Notas del cliente</p>
-                                <p class="mt-2 rounded-xl border border-ink-100 p-3 text-body-sm text-ink-700" x-text="selectedOrder.notes"></p>
-                            </div>
-                        </template>
-
-                        <div>
-                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Justificante de pago</p>
-                            <div class="mt-2 rounded-xl border p-3 text-body-sm" :class="proofBoxClass(selectedOrder)">
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="font-semibold" x-text="selectedOrder.paymentProofName ? 'Justificante recibido' : 'Sin justificante todavía'"></span>
-                                    <span class="animate-proof-blink shrink-0 inline-flex items-center gap-1.5 rounded-full bg-amber-200 px-3 py-1.5 text-[11px] font-bold text-amber-900 shadow-card" x-show="selectedOrder.paymentProofStatus === 'pending'">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
-                                        ¡Revisar!
-                                    </span>
-                                    <span class="shrink-0 inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold" x-show="selectedOrder.paymentProofStatus !== 'pending'" x-text="proofStatusInfo(selectedOrder).label"></span>
-                                </div>
-                                <p class="mt-1 break-all text-caption font-medium text-ink-700" x-show="selectedOrder.paymentProofName" x-text="selectedOrder.paymentProofName"></p>
-                                <p class="mt-1 text-caption" x-show="selectedOrder.paymentProofRejectionReason" x-cloak x-text="'Motivo: ' + selectedOrder.paymentProofRejectionReason"></p>
-
-                                <template x-if="selectedOrder.paymentProofPath">
-                                    <div class="mt-3 flex flex-wrap items-center gap-2">
-                                        <a :href="proofFileUrl(selectedOrder)" target="_blank" rel="noopener" class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-ink-200 bg-white px-4 text-caption font-semibold text-ink-600 transition hover:border-brand-300 hover:text-brand-600">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                            Ver justificante
-                                        </a>
-                                        <a :href="proofFileUrl(selectedOrder) + '&download=1'" class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-ink-200 bg-white px-4 text-caption font-semibold text-ink-600 transition hover:border-brand-300 hover:text-brand-600">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M12 3v12m0-12 4 4m-4-4-4 4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-                                            Descargar
-                                        </a>
-                                    </div>
-                                </template>
-
-                                <template x-if="selectedOrder.paymentProofName && selectedOrder.paymentProofStatus !== 'approved'">
-                                    <div class="mt-3 flex flex-wrap items-center gap-2">
-                                        <button type="button" @click="approveProof(selectedOrder)" class="inline-flex h-9 items-center justify-center rounded-lg bg-savings-500 px-4 text-caption font-semibold text-white transition">Aprobar justificante</button>
-                                        <button type="button" @click="rejectingProof = !rejectingProof" class="inline-flex h-9 items-center justify-center rounded-lg border border-danger-200 px-4 text-caption font-semibold text-danger-600 transition hover:bg-danger-50">Rechazar justificante</button>
-                                    </div>
-                                </template>
-                                <template x-if="rejectingProof">
-                                    <div class="mt-3">
-                                        <input type="text" x-model="rejectReason" placeholder="Motivo del rechazo (se lo comunicaremos al cliente)" class="h-10 w-full rounded-lg border-ink-200 text-body-sm text-ink-900 focus:border-brand-500 focus:ring-brand-500">
-                                        <div class="mt-2 flex items-center gap-2">
-                                            <button type="button" @click="rejectProof(selectedOrder)" class="inline-flex h-9 items-center justify-center rounded-lg bg-danger-600 px-4 text-caption font-semibold text-white transition hover:bg-danger-700">Confirmar rechazo</button>
-                                            <button type="button" @click="rejectingProof = false; rejectReason = ''" class="inline-flex h-9 items-center justify-center rounded-lg border border-ink-200 px-4 text-caption font-semibold text-ink-600 transition">Cancelar</button>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-
-                        <div>
-                            <p class="text-caption font-semibold uppercase tracking-wide text-ink-500">Actualizar estado</p>
-                            <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                                <template x-for="(step, idx) in ORDER_STEPS" :key="step.key">
-                                    <button type="button" @click="setStatus(selectedOrder, idx)" :disabled="!canSetStatus(selectedOrder, idx)" class="rounded-lg border-2 px-3 py-2 text-caption font-semibold transition disabled:cursor-not-allowed disabled:opacity-40" :class="stepColorClass(idx, status(selectedOrder).stepIndex === idx)" x-text="step.label"></button>
-                                </template>
-                            </div>
-                            <p class="mt-2 text-[11px] text-ink-400" x-show="status(selectedOrder).isManual" x-cloak>Estado fijado manualmente por el equipo (ya no avanza automáticamente).</p>
-                            <p class="mt-2 flex items-center gap-1.5 text-[11px] text-amber-900" x-show="selectedOrder.paymentProofStatus !== 'approved'" x-cloak>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
-                                El justificante debe estar aprobado para avanzar el estado, y cada paso debe seguir al anterior.
-                            </p>
-                        </div>
-                    </div>
+                    </main>
                 </div>
             </div>
         </template>
@@ -814,7 +855,6 @@
                         { id: 'products', label: 'Productos', icon: '<path d="M21 7.5a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 7.5v9a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/><path d="M3.3 6.5 12 11.5l8.7-5M12 21.5v-10"/>' },
                         { id: 'orders', label: 'Pedidos', icon: '<rect x="1" y="6" width="15" height="12" rx="1"/><path d="M16 10h3l3 3v5h-6z"/><circle cx="6" cy="19" r="1.5"/><circle cx="17.5" cy="19" r="1.5"/>' },
                         { id: 'coupons', label: 'Cupones', icon: '<path d="M20.6 12.6 12.6 20.6a2 2 0 0 1-2.8 0L3 13.8V3h10.8l6.8 6.8a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/>' },
-                        { id: 'notifications', label: 'Notificaciones', icon: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>' },
                         { id: 'payments', label: 'Datos de pago', icon: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>' },
                         { id: 'customers', label: 'Clientes', icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>' },
                         { id: 'visitors', label: 'Visitantes', icon: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/>' },
@@ -822,7 +862,8 @@
                     ],
                     orders: [],
                     accounts: [],
-                    notifications: [],
+                    notifOpen: false,
+                    pollTimer: null,
                     visits: [],
                     abandonedCarts: [],
                     search: '',
@@ -848,7 +889,7 @@
                         var hashTab = (window.location.hash || '').replace('#', '');
                         if (hashTab && this.tabs.some(function (t) { return t.id === hashTab; })) this.tab = hashTab;
                         this.$watch('tab', (value) => { window.location.hash = value; });
-                        if (this.authed) this.loadData();
+                        if (this.authed) { this.loadData(); this.startPolling(); }
                     },
                     login() {
                         if (this.username === ADMIN_USERNAME && this.password === ADMIN_PASSWORD) {
@@ -856,6 +897,7 @@
                             this.authed = true;
                             this.loginError = '';
                             this.loadData();
+                            this.startPolling();
                         } else {
                             this.loginError = 'Usuario o contraseña incorrectos.';
                         }
@@ -865,6 +907,15 @@
                         this.authed = false;
                         this.username = '';
                         this.password = '';
+                        this.stopPolling();
+                    },
+                    startPolling() {
+                        var self = this;
+                        if (this.pollTimer) return;
+                        this.pollTimer = setInterval(function () { self.loadOrdersFromApi(); }, 20000);
+                    },
+                    stopPolling() {
+                        if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = null; }
                     },
                     clearSiteCache() {
                         var self = this;
@@ -889,7 +940,6 @@
                     loadData() {
                         this.orders = getAllOrders();
                         this.accounts = getAllAccountsList();
-                        this.notifications = getNotifications();
                         this.visits = getVisits();
                         this.abandonedCarts = getAbandonedCarts();
                         this.disabledProducts = getDisabledProducts();
@@ -996,8 +1046,44 @@
                         this.selectedOrder = order;
                         this.rejectingProof = false;
                         this.rejectReason = '';
+                        this.tab = 'order-detail';
                     },
-                    closeDetail() { this.selectedOrder = null; },
+                    closeDetail() {
+                        this.selectedOrder = null;
+                        this.tab = 'orders';
+                    },
+                    notifications() {
+                        var items = [];
+                        this.orders.forEach(function (o) {
+                            var placedAt = new Date(o.date).getTime();
+                            var isRecent = (Date.now() - placedAt) < 48 * 36e5;
+                            if (isRecent && !o.notifOrderReadAt) {
+                                items.push({ id: 'order-' + o.orderNumber, type: 'order', date: o.date, text: 'Nuevo pedido ' + o.orderNumber + ' de ' + o.email, orderNumber: o.orderNumber });
+                            }
+                            if (o.paymentProofName && o.paymentProofStatus === 'pending') {
+                                var proofAt = o.paymentProofAt || o.date;
+                                var proofRead = o.notifProofReadAt && new Date(o.notifProofReadAt).getTime() >= new Date(proofAt).getTime();
+                                if (!proofRead) {
+                                    items.push({ id: 'proof-' + o.orderNumber, type: 'proof', date: proofAt, text: 'Justificante pendiente de revisar: ' + o.orderNumber, orderNumber: o.orderNumber });
+                                }
+                            }
+                        });
+                        items.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+                        return items;
+                    },
+                    markNotificationRead(n) {
+                        var order = this.orders.find(function (o) { return o.orderNumber === n.orderNumber; });
+                        var nowIso = new Date().toISOString();
+                        if (order) {
+                            if (n.type === 'order') order.notifOrderReadAt = nowIso;
+                            else order.notifProofReadAt = nowIso;
+                        }
+                        apiMarkNotificationRead(n.orderNumber, n.type);
+                    },
+                    markAllNotificationsRead() {
+                        var self = this;
+                        this.notifications().forEach(function (n) { self.markNotificationRead(n); });
+                    },
                     proofStatusInfo(order) {
                         if (!order.paymentProofName) return { label: 'Sin justificante', cls: 'text-ink-400' };
                         if (order.paymentProofStatus === 'approved') return { label: 'Aprobado', cls: 'text-savings-700' };
@@ -1085,13 +1171,11 @@
                             if (res && res.ok) self.coupons = self.coupons.filter(function (x) { return x.id !== c.id; });
                         });
                     },
-                    openOrderFromNotification(orderNumber) {
-                        var order = this.orders.find(function (o) { return o.orderNumber === orderNumber; });
-                        if (order) { this.tab = 'orders'; this.selectedOrder = order; }
-                    },
-                    dismissNotif(id) {
-                        dismissNotification(id);
-                        this.notifications = getNotifications();
+                    openOrderFromNotification(n) {
+                        this.markNotificationRead(n);
+                        this.notifOpen = false;
+                        var order = this.orders.find(function (o) { return o.orderNumber === n.orderNumber; });
+                        if (order) this.select(order);
                     },
                     setStatus(order, idx) {
                         if (!this.canSetStatus(order, idx)) {
@@ -1141,6 +1225,9 @@
                     },
                     status(order) { return orderStatus(order); },
                     currentTab() {
+                        if (this.tab === 'order-detail') {
+                            return { id: 'order-detail', label: (this.selectedOrder || {}).orderNumber || 'Pedido', icon: '<rect x="1" y="6" width="15" height="12" rx="1"/><path d="M16 10h3l3 3v5h-6z"/><circle cx="6" cy="19" r="1.5"/><circle cx="17.5" cy="19" r="1.5"/>' };
+                        }
                         return this.tabs.find(t => t.id === this.tab) || this.tabs[0];
                     },
                     fmt(n) { return fmtEUR(n); },

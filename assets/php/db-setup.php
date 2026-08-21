@@ -64,6 +64,15 @@ try {
     if (!in_array('payment_proof_path', $existingCols, true)) {
         $pdo->exec("ALTER TABLE orders ADD COLUMN payment_proof_path VARCHAR(255) NULL AFTER payment_proof_name");
     }
+    // Read-state for the admin notification bell — separate from the order's
+    // own workflow state, so marking a notification "read" never affects the
+    // payment-proof review status or step progress.
+    if (!in_array('notif_order_read_at', $existingCols, true)) {
+        $pdo->exec("ALTER TABLE orders ADD COLUMN notif_order_read_at DATETIME NULL");
+    }
+    if (!in_array('notif_proof_read_at', $existingCols, true)) {
+        $pdo->exec("ALTER TABLE orders ADD COLUMN notif_proof_read_at DATETIME NULL");
+    }
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS coupons (
         id INT AUTO_INCREMENT PRIMARY KEY,

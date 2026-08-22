@@ -227,24 +227,21 @@
     ];
     function orderStatus(order) {
         var placedAt = new Date(order.date).getTime();
-        var hoursElapsed = (Date.now() - placedAt) / 36e5;
         var express = order.shippingMethod === 'express';
         var tPaid = 3;
         var tPreparing = 14;
         var tShipped = express ? 20 : 30;
         var tDelivered = express ? 48 : 120;
 
-        var stepIndex = 0;
-        if (hoursElapsed >= tDelivered) stepIndex = 4;
-        else if (hoursElapsed >= tShipped) stepIndex = 3;
-        else if (hoursElapsed >= tPreparing) stepIndex = 2;
-        else if (hoursElapsed >= tPaid) stepIndex = 1;
-
-        // The shop team can override the simulated step from the admin panel
-        // (e.g. after manually checking the uploaded payment proof).
+        // The order stays on "Pedido recibido" until the shop team manually
+        // advances it from the admin panel — it never progresses on its own
+        // just because time has passed.
         var isManual = typeof order.statusOverride === 'number';
-        if (isManual) stepIndex = order.statusOverride;
+        var stepIndex = isManual ? order.statusOverride : 0;
 
+        // Estimated schedule shown to the customer as a projection (e.g.
+        // "Estimado 24 ago"), not an indication that these steps have
+        // actually happened.
         var thresholds = [0, tPaid, tPreparing, tShipped, tDelivered];
         var dates = thresholds.map(function (h) { return new Date(placedAt + h * 36e5); });
 

@@ -687,7 +687,7 @@
                                                 </div>
                                                 <div class="min-w-0 flex-1" :class="idx < ORDER_STEPS.length - 1 ? 'pb-5' : ''">
                                                     <button type="button" @click="setStatus(selectedOrder, idx)" :disabled="!canSetStatus(selectedOrder, idx)" class="text-left text-body-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40" :class="idx <= status(selectedOrder).stepIndex ? 'text-ink-900' : 'text-ink-400'" x-text="step.label"></button>
-                                                    <p class="text-caption text-ink-500" x-text="formatDateTime(status(selectedOrder).dates[idx])"></p>
+                                                    <p class="text-caption text-ink-500" x-text="idx <= status(selectedOrder).stepIndex ? formatDateTime(status(selectedOrder).dates[idx]) : 'Estimado ' + formatDate(status(selectedOrder).dates[idx])"></p>
                                                 </div>
                                             </div>
                                         </template>

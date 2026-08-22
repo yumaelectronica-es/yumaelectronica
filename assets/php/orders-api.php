@@ -95,20 +95,12 @@ function rowToOrder($row) {
     ];
 }
 
-// Mirrors the time-based simulation in cart.js's orderStatus(), used here
-// only to know the CURRENT effective step so admin status changes can be
-// gated (must be approved + sequential); the front-end remains the source
-// of truth for what the customer sees.
+// Mirrors orderStatus() in cart.js: an order stays on step 0 until the shop
+// team manually sets status_override from the admin panel — it never
+// advances on its own with elapsed time. Used here only to gate admin status
+// changes (must be approved + sequential).
 function currentStatusIndex($row) {
     if ($row['status_override'] !== null) return (int) $row['status_override'];
-    $placedAt = strtotime($row['order_date']);
-    $hoursElapsed = ($placedAt !== false) ? (time() - $placedAt) / 3600 : 0;
-    $express = ($row['shipping_method'] ?? '') === 'express';
-    $tPaid = 3; $tPreparing = 14; $tShipped = $express ? 20 : 30; $tDelivered = $express ? 48 : 120;
-    if ($hoursElapsed >= $tDelivered) return 4;
-    if ($hoursElapsed >= $tShipped) return 3;
-    if ($hoursElapsed >= $tPreparing) return 2;
-    if ($hoursElapsed >= $tPaid) return 1;
     return 0;
 }
 
